@@ -14,17 +14,17 @@
         > Visitor Pattern
 
 
-Files Modified:
-    + NoCapGamesLauncher.java
-        > Skipped the login feature for now by commenting it out
-        > I'm still figuring out the database permissions
-            > I'm thinking of just doing it locally rather than on a Virtual Machine
-    + resourceLoader.java
-    + Library.java
-    + Search.java
-    + src/main/resources/ImageResources
-        > Added naming conventions to the images
-        > Naming these files should already be handled by the database but to be safe, avoid special characters
-        > The logic is replacing spaces with underscores and turning all characters to lowercase
-        > For convenience, we're sticking to .jpg file extensions
-    - src/Resources
+### Files Modified:
+    * NoCapGamesLauncher.java
+        1. Skipped the login feature for now by commenting it out
+        2. I'm still figuring out the database permissions
+            - I'm thinking of just doing it locally rather than on a Virtual Machine
+    * resourceLoader.java
+    * Library.java
+    * Search.java
+    * src/main/resources/ImageResources
+        1. Added naming conventions to the images
+        2. Naming these files should already be handled by the database but to be safe, avoid special characters
+        3. The logic is replacing spaces with underscores and turning all characters to lowercase
+        4. For convenience, we're sticking to .jpg file extensions
+    * src/Resources
