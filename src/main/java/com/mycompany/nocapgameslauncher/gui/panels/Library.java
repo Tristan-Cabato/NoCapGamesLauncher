@@ -3,8 +3,7 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
 import com.mycompany.nocapgameslauncher.gui.resourceManager.resourceLoader;
-import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
-import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
+
 import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CARD_WIDTH;
 
 import javax.swing.*;
@@ -32,6 +31,7 @@ public class Library extends ThemePanel {
         updateTheme();
     }
 
+    @SuppressWarnings("BusyWait") // Placeholder suppression for now
     private void createContentView() {
         try {
             setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -56,8 +56,30 @@ public class Library extends ThemePanel {
                 for (int i = 0; i < gameTitles.size(); i++) {
                     String title = gameTitles.get(i);
                     String description = (i < gameDescriptions.size()) ? gameDescriptions.get(i) : "No description available.";
-                    ImageIcon gameIcon = resourceLoader.loadIcon("ImageResources/default_game_icon.jpg"); 
-                    gameCardsList.add(GameCardCreator.createGameCard(title, description, gameIcon, () -> frame.showGameDetail(title)));
+                    String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
+                    ImageIcon gameIcon = resourceLoader.loadIcon(resourceLoader.PROXYIMAGE);
+                    
+                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, () -> frame.showGameDetail(title));
+                    JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+                    
+                    // Load actual image in background
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1200); // 1.2 seconds | Simulate loading
+                            ImageIcon actualIcon = resourceLoader.loadIcon(iconPath);
+                            if (actualIcon != null) {
+                                SwingUtilities.invokeLater(() -> {
+                                    // Update the image label with the actual icon
+                                    Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+                                    imageLabel.setIcon(new ImageIcon(scaled));
+                                });
+                            }
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }, "ImageLoader-" + title).start();
+                    
+                    gameCardsList.add(card);
                 }
             }
 

@@ -1,4 +1,5 @@
 com\mycompany\nocapgameslauncher\gui\panels\Library.class
+com\mycompany\nocapgameslauncher\gui\panels\Library$1.class
 com\mycompany\nocapgameslauncher\gui\utilities\ThemeHeader.class
 com\mycompany\nocapgameslauncher\gui\components\sidebarCreator$4.class
 com\mycompany\nocapgameslauncher\gui\components\sidebarCreator.class
@@ -6,14 +7,19 @@ com\mycompany\nocapgameslauncher\gui\components\GameCardCreator.class
 com\mycompany\nocapgameslauncher\gui\components\sidebarCreator$2.class
 com\mycompany\nocapgameslauncher\gui\resourceManager\resourceLoader.class
 com\mycompany\nocapgameslauncher\gui\utilities\FontManager.class
+com\mycompany\nocapgameslauncher\gui\utilities\AuthManager.class
 com\mycompany\nocapgameslauncher\gui\panels\Profile$1.class
+com\mycompany\nocapgameslauncher\gui\components\HeaderCreator$3.class
+com\mycompany\nocapgameslauncher\gui\panels\Search.class
 com\mycompany\nocapgameslauncher\gui\panels\Store.class
 com\mycompany\nocapgameslauncher\NoCapGamesLauncher.class
+com\mycompany\nocapgameslauncher\gui\panels\Search$1.class
 com\mycompany\nocapgameslauncher\gui\components\sidebarCreator$1.class
 com\mycompany\nocapgameslauncher\gui\utilities\LightModeToggle.class
 com\mycompany\nocapgameslauncher\gui\components\HeaderCreator$1.class
 com\mycompany\nocapgameslauncher\gui\panels\Friends$1.class
 com\mycompany\nocapgameslauncher\gui\panels\GameDetail.class
+com\mycompany\nocapgameslauncher\gui\panels\LoginForm.class
 com\mycompany\nocapgameslauncher\gui\utilities\ThemeManager$Themeable.class
 com\mycompany\nocapgameslauncher\gui\utilities\ThemePanel.class
 com\mycompany\nocapgameslauncher\gui\components\ButtonCreator.class
@@ -25,4 +31,5 @@ com\mycompany\nocapgameslauncher\gui\mainFrame.class
 com\mycompany\nocapgameslauncher\gui\components\HeaderCreator$2.class
 com\mycompany\nocapgameslauncher\gui\panels\Profile.class
 com\mycompany\nocapgameslauncher\gui\components\GameCardCreator$1.class
+com\mycompany\nocapgameslauncher\gui\panels\Store$1.class
 com\mycompany\nocapgameslauncher\gui\utilities\ThemeButton.class

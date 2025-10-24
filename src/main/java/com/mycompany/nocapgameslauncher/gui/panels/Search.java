@@ -11,8 +11,7 @@ import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CA
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 import java.util.*;
 
 public class Search extends ThemePanel {
@@ -117,6 +116,7 @@ public class Search extends ThemePanel {
         }
     }
     
+    @SuppressWarnings("BusyWait") // Placeholder suppression for now
     public void performSearch(String query, String scope) {
         currentQuery = query.trim().toLowerCase();
         
@@ -135,7 +135,8 @@ public class Search extends ThemePanel {
         ArrayList<String> searchTitles = new ArrayList<>();
         ArrayList<String> searchDescriptions = new ArrayList<>();
         
-        if (scope.equals("LIBRARY")) {
+        switch (scope) {
+            case "LIBRARY" -> {
             ArrayList<String> libraryTitles = getLibraryTitles();
             ArrayList<String> libraryDescriptions = resourceLoader.loadGameDescriptionsFromFile("/gamedesc.txt");
             searchTitles.addAll(libraryTitles);
@@ -145,20 +146,19 @@ public class Search extends ThemePanel {
                 } else {
                     searchDescriptions.add("");
                 }
+            } titleLabel.setText("Library Search Results");
+            } case "STORE" -> {
+                searchTitles.addAll(getStoreTitles());
+                for (String _ : searchTitles) {
+                    searchDescriptions.add("");
+                }
+                titleLabel.setText("Store Search Results");
+            } default -> {
+                searchTitles.addAll(allGameTitles);
+                searchDescriptions.addAll(allGameDescriptions);
+                titleLabel.setText("Search Results");
             }
-            titleLabel.setText("Library Search Results");
-        } else if (scope.equals("STORE")) {
-            searchTitles.addAll(getStoreTitles());
-            for (int i = 0; i < searchTitles.size(); i++) {
-                searchDescriptions.add("");
-            }
-            titleLabel.setText("Store Search Results");
-        } else {
-            searchTitles.addAll(allGameTitles);
-            searchDescriptions.addAll(allGameDescriptions);
-            titleLabel.setText("Search Results");
         }
-        
         // Search for matching games
         int matchCount = 0;
         for (int i = 0; i < searchTitles.size(); i++) {
@@ -168,13 +168,36 @@ public class Search extends ThemePanel {
             // Check if title or description contains the search query
             if (title.toLowerCase().contains(currentQuery) || 
                 description.toLowerCase().contains(currentQuery)) {
-                
-                ImageIcon gameIcon = resourceLoader.loadIcon("ImageResources/default_game_icon.jpg");
-                JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, 
-                    () -> frame.showGameDetail(title));
-                gameCardsList.add(card);
-                cardsPanel.add(card);
-                matchCount++;
+                    String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
+                    // Load proxy image immediately
+                    ImageIcon gameIcon = resourceLoader.loadIcon(resourceLoader.PROXYIMAGE);
+                    
+                    // Create the card with the proxy image first
+                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, () -> frame.showGameDetail(title));
+                    
+                    // Store a reference to the card's image label
+                    JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+                    
+                    // Load actual image in background
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1200); // 1.2 seconds | Simulate loading
+                            ImageIcon actualIcon = resourceLoader.loadIcon(iconPath);
+                            if (actualIcon != null) {
+                                SwingUtilities.invokeLater(() -> {
+                                    // Update the image label with the actual icon
+                                    Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+                                    imageLabel.setIcon(new ImageIcon(scaled));
+                                });
+                            }
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }, "ImageLoader-" + title).start();
+                    
+                    gameCardsList.add(card);
+                    cardsPanel.add(card);
+                    matchCount++;
             }
         }
         
