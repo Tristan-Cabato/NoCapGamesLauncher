@@ -3,7 +3,8 @@ package com.mycompany.nocapgameslauncher.database;
 import java.sql.*;
 
 public class DatabaseHandler {
-    private static final String DB_URL = "jdbc:mysql://192.168.1.10:3306/NoCapServer";
+    // Change these values as you wish
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/nocapserver";
     private static final String DB_USER = "Admin";
     private static final String DB_PASS = "nocap";
 
@@ -43,6 +44,30 @@ public class DatabaseHandler {
         }
     }
 
+    public static void initializeDatabase() {
+        String[] initQueries = {
+            "CREATE DATABASE IF NOT EXISTS nocapserver",
+            "USE nocapserver",
+            "CREATE TABLE IF NOT EXISTS users (" +
+                "userID INT AUTO_INCREMENT PRIMARY KEY, " +
+                "username VARCHAR(50) UNIQUE NOT NULL, " +
+                "password VARCHAR(255) NOT NULL" +
+            ")",
+            "INSERT IGNORE INTO users (username, password) VALUES ('Admin', 'nocap')"
+        };
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            
+            for (String query : initQueries) {
+                stmt.execute(query);
+            }
+            System.out.println("Database initialized successfully");
+        } catch (SQLException e) {
+            System.err.println("Error initializing database: " + e.getMessage());
+        }
+    }
+    
     public static boolean login(String username, String password) throws SQLException {
         String sql = "SELECT userID FROM users WHERE username = ? AND password = ?";
 

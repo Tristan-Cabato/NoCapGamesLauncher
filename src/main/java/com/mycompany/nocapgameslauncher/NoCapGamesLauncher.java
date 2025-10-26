@@ -1,13 +1,16 @@
 
 package com.mycompany.nocapgameslauncher;
 
-import com.mycompany.nocapgameslauncher.gui.mainFrame;
+import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.panels.LoginForm;
 import javax.swing.*;
 
 public class NoCapGamesLauncher {
     public static void main(String[] args) {
-        /* SwingUtilities.invokeLater(() -> {
+        // Initialize database before starting the UI
+        DatabaseHandler.initializeDatabase();
+        
+        SwingUtilities.invokeLater(() -> {
             // Show login dialog first - don't create mainFrame yet
             JFrame loginFrame = new JFrame("No Cap Games - Login");
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -17,12 +20,11 @@ public class NoCapGamesLauncher {
             loginFrame.setLocationRelativeTo(null);
             loginFrame.setVisible(true);
         });
-        */ straightToPage();
     }
 
-    // This is for testing
+    /* This is for testing
     public static void straightToPage() { 
         mainFrame main = new mainFrame();
         main.setVisible(true);
-    }
+    } */
 }

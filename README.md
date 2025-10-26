@@ -1,30 +1,30 @@
-# Added Virtual Proxy Structural Pattern
-    - Loads the Proxy Image by default
-    - When main thread (mainFrame) is free, it loads the actual image
-    - Delayed for 1200 seconds to simulate loading time
-    - I plan to add the proxy system again when exiting the screen (i.e During a Game, GameDetail.java, and LoginForm)
-        - To do this I'd need to make the threads be attached to an event listener (componentShown and componentHidden) of whether the screen is visible or not
-        - However that feature will be heavy on trial and error so I'll version control for now
+# Testing Database Connect (2nd attempt)
+    - Install MySQL through (https://dev.mysql.com/downloads/installer)
+    - Workbench is the easiest way to prototype (https://dev.mysql.com/downloads/workbench)
+        - The website already detects your OS
+    - From my experience, root by default is always the top admin. BUT for some reason, it doesn't have all the permissions yet (It can create and grant somehow)
+        - Personally, I'm not using root to connect to the database, I created another one named Admin, modify as you will.
+    - I created the users table to make "Admin" at the very beginning | "Admin" is accessed via the user table in the database, not the mysql user itself
+    - I'm still thinking about what to use the gameURL logic in the database for, but the original idea for that was for the metadata. Which is how the current game knows everything about it, i.e Game Description, Game Image, File Path, etc.
+
+    * Naming Convention
+        > Replace spaces with underscores
+        > Turn all characters to lowercase
+        > Avoid special characters (Though I plan to make that an edge case too, it will be replaced by an underscore)
+        > The database being in underscore is not a naming convention, for some reason, MySQL workbench just lowercases it
+
+    - Be very adamant about the connections, I hardcoded most of the Strings.
 
 # Next Agenda
     - Iterator Pattern
-    - Database (Majority of the features are locked behind this)
-        > Prototype
-        > File Generation
-        > Visitor Pattern
+    - Prototype
+    - File Generation
+    - Visitor Pattern
 
 
 ### Files Modified:
     * NoCapGamesLauncher.java
-        1. Skipped the login feature for now by commenting it out
-        2. I'm still figuring out the database permissions
-            - I'm thinking of just doing it locally rather than on a Virtual Machine
-    * resourceLoader.java
-    * Library.java
-    * Search.java
-    * src/main/resources/ImageResources
-        1. Added naming conventions to the images
-        2. Naming these files should already be handled by the database but to be safe, avoid special characters
-        3. The logic is replacing spaces with underscores and turning all characters to lowercase
-        4. For convenience, we're sticking to .jpg file extensions
-    * src/Resources
+        1. Returned the login feature
+        2. "Database Initialized Successfully" is just the creation of the database, the users table, and the Admin user
+    * DatabaseHandler.java
+    * databaseMegaquery.java

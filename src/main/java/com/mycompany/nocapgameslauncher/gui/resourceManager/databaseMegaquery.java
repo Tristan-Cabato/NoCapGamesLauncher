@@ -93,17 +93,20 @@ public class databaseMegaquery extends JFrame {
         int processedCount = 0;
         for (File file : lnkFiles) {
             try {
+                int gameID = processedCount + 1;
                 String fileName = file.getName();
                 String gameName = fileName.substring(0, fileName.lastIndexOf('.'));
+                gameName = gameName.replace(" ", "_").toLowerCase();
                 String filePath = file.getAbsolutePath();
                 
-                String query = "INSERT INTO gameData (gameName, URL) VALUES (?, ?)";
+                String query = "INSERT INTO gameData (gameID, gameName, gameURL) VALUES (?, ?, ?)";
                 String url = "jdbc:mysql://localhost:3306/NoCapServer?useSSL=false&allowPublicKeyRetrieval=true";
                 try (Connection conn = DriverManager.getConnection(url, "Admin", "nocap");
                     PreparedStatement stmt = conn.prepareStatement(query)) {
                     
-                    stmt.setString(1, gameName);
-                    stmt.setString(2, filePath);
+                    stmt.setInt(1, gameID);
+                    stmt.setString(2, gameName);
+                    stmt.setString(3, filePath);
                     
                     stmt.executeUpdate();
                 }
@@ -130,11 +133,6 @@ private void runMegaQuery() {
     String[] queries = {
         "CREATE DATABASE IF NOT EXISTS NoCapServer",
         "USE NoCapServer",
-        "CREATE TABLE IF NOT EXISTS users (" +
-            "userID INT AUTO_INCREMENT PRIMARY KEY, " +
-            "username VARCHAR(50) UNIQUE NOT NULL, " +
-            "password VARCHAR(255) NOT NULL" +
-        ")",
         "CREATE TABLE IF NOT EXISTS gameData (" +
             "gameID INT AUTO_INCREMENT PRIMARY KEY, " +
             "gameName VARCHAR(100) NOT NULL, " +
@@ -147,7 +145,6 @@ private void runMegaQuery() {
             "FOREIGN KEY (userID) REFERENCES users(userID), " +
             "FOREIGN KEY (gameID) REFERENCES gameData(gameID)" +
         ")",
-        "INSERT IGNORE INTO users (username, password) VALUES ('Admin', 'nocap')"
     };
 
     String url = "jdbc:mysql://localhost:3306/mysql?useSSL=false&allowPublicKeyRetrieval=true";
