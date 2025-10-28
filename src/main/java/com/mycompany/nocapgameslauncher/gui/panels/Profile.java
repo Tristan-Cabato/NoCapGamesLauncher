@@ -4,8 +4,12 @@ import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemeButton;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
+
 import javax.swing.*;
+
 import java.awt.*;
+
+import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
 
 public class Profile extends ThemePanel {
 

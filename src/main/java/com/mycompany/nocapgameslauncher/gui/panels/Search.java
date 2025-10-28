@@ -2,7 +2,7 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
-import com.mycompany.nocapgameslauncher.gui.resourceManager.resourceLoader;
+import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
@@ -10,9 +10,17 @@ import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CA
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
+
+import org.json.*;
+
+import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 
 public class Search extends ThemePanel {
     private final mainFrame frame;
@@ -62,7 +70,25 @@ public class Search extends ThemePanel {
     }
     
     private ArrayList<String> getLibraryTitles() {
-        return resourceLoader.loadGamesFromFile("/library_games.txt");
+        ArrayList<String> titles = new ArrayList<>();
+        File gamesFile = new File("user_data/store_games.json");
+        if (gamesFile.exists()) {
+            try {
+                // Read the JSON file
+                String json = new String(Files.readAllBytes(gamesFile.toPath()));
+                // Parse the JSON array
+                JSONArray games = new JSONArray(json);
+                
+                // Extract game titles
+                for (int i = 0; i < games.length(); i++) {
+                    JSONObject game = games.getJSONObject(i);
+                    titles.add(game.getString("gameName"));
+                }
+            } catch (IOException | JSONException e) {
+                System.out.println("Error loading library titles: " + e.getMessage() + "\n");
+            }
+        }
+        return titles;
     }
     
     private ArrayList<String> getStoreTitles() {

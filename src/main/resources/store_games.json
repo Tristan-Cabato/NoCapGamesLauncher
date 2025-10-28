@@ -1,0 +1,30 @@
+[
+    {
+        "gameId": -1,
+        "gameIconPath": "src/main/resources/ImageResources/genshin impact.jpg",
+        "gameName": "genshin_impact",
+        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Genshin Impact.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameId": -1,
+        "gameIconPath": "src/main/resources/ImageResources/honkai star rail.jpg",
+        "gameName": "honkai_star_rail",
+        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Honkai Star Rail.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameId": -1,
+        "gameIconPath": "src/main/resources/ImageResources/osu_lazer.jpg",
+        "gameName": "osu_lazer",
+        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\osu_lazer.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameId": -1,
+        "gameIconPath": "src/main/resources/ImageResources/tlauncher.jpg",
+        "gameName": "tlauncher",
+        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\TLauncher.lnk",
+        "gameDescription": "This is a description"
+    }
+]

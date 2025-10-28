@@ -2,9 +2,15 @@ package com.mycompany.nocapgameslauncher.gui.components;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
 
 public class HeaderCreator {
     public static JPanel createHeader(mainFrame frame, JPanel sidebarPanel) {
@@ -127,21 +133,25 @@ public class HeaderCreator {
             JPopupMenu profileMenu = new JPopupMenu();
             profileMenu.setBackground(LightModeToggle.getComponentColor());
 
-            JMenuItem changeAccountItem = new JMenuItem("Change Account");
-            changeAccountItem.setForeground(LightModeToggle.getTextColor());
-            changeAccountItem.setBackground(LightModeToggle.getComponentColor());
-            changeAccountItem.addActionListener(_ -> {
-                JOptionPane.showMessageDialog(frame, "Change Account clicked!");
+            JMenuItem logoutItem = new JMenuItem("Logout");
+            logoutItem.setForeground(LightModeToggle.getTextColor());
+            logoutItem.setBackground(LightModeToggle.getComponentColor());
+            logoutItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    frame.dispose();
+                    NoCapGamesLauncher.main(null);
+                }
             });
-            profileMenu.add(changeAccountItem);
+            profileMenu.add(logoutItem);
 
-            JMenuItem loginSignoutItem = new JMenuItem("Login/Signout");
+            /* JMenuItem loginSignoutItem = new JMenuItem("Login/Signout");
             loginSignoutItem.setForeground(LightModeToggle.getTextColor());
             loginSignoutItem.setBackground(LightModeToggle.getComponentColor());
             loginSignoutItem.addActionListener(_ -> {
                 JOptionPane.showMessageDialog(frame, "Login/Signout clicked!");
             });
-            profileMenu.add(loginSignoutItem);
+            profileMenu.add(loginSignoutItem); Redundant */
 
             profileMenu.show(profileIcon, 0, profileIcon.getHeight());
         });

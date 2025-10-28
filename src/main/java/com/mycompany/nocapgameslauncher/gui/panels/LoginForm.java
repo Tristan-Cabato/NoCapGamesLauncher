@@ -1,7 +1,7 @@
 package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
-import com.mycompany.nocapgameslauncher.gui.resourceManager.databaseMegaquery;
+import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 
 import javax.swing.*;
