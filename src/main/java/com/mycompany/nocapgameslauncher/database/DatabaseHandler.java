@@ -95,7 +95,7 @@ public class DatabaseHandler {
     public static List<GameMetadata> getUserGames(int userId) throws SQLException {
         List<GameMetadata> games;
         games = new ArrayList<>();
-        String sql = "SELECT g.gameId, g.gameName, g.executablePath, ug.lastPlayed, ug.playTime " +
+        String sql = "SELECT g.gameId, g.gameName, g.gameURL, g.imageURL, g.gameDescription " +
                     "FROM user_games ug " +
                     "JOIN games g ON ug.gameId = g.gameId " +
                     "WHERE ug.userId = ?";
@@ -108,9 +108,9 @@ public class DatabaseHandler {
                     games.add(new GameMetadata(
                         rs.getString("gameId"),
                         rs.getString("gameName"),
-                        rs.getString("executablePath"),
-                        rs.getTimestamp("lastPlayed").toLocalDateTime(),
-                        rs.getLong("playTime")
+                        rs.getString("gameURL"),
+                        rs.getString("imageURL"),
+                        rs.getString("gameDescription")
                     ));
                 }
             }

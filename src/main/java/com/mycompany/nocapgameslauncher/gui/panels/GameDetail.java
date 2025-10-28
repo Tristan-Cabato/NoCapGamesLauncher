@@ -65,33 +65,59 @@ public class GameDetail extends ThemePanel {
 
     private Map<String, String> loadGameDescriptions() {
         Map<String, String> descriptions = new HashMap<>();
-        ArrayList<String> titles = new ArrayList<>();
-        ArrayList<String> descs = new ArrayList<>();
-
-        try (BufferedReader titleReader = new BufferedReader(new InputStreamReader(GameDetail.class.getResourceAsStream("/library_games.txt")))) {
+        
+        try (InputStream is = getClass().getResourceAsStream("/store_games.json");
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
+            
+            // Read the entire file content
+            StringBuilder jsonContent = new StringBuilder();
             String line;
-            while ((line = titleReader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    titles.add(line.trim());
+            while ((line = reader.readLine()) != null) {
+                jsonContent.append(line.trim());
+            }
+            
+            // Simple JSON parsing
+            String content = jsonContent.toString();
+            int startIndex = content.indexOf('[') + 1;
+            int endIndex = content.lastIndexOf(']');
+            
+            if (startIndex > 0 && endIndex > startIndex) {
+                String gamesArray = content.substring(startIndex, endIndex);
+                // Split by "gameName" to find each game entry
+                String[] gameEntries = gamesArray.split("\\{\\\"gameName\\\"\\s*:");
+
+                for (int i = 1; i < gameEntries.length; i++) {
+                    try {
+                        String gameName = null;
+                        String gameDescription = "No description available.";
+                        
+                        // Extract game name
+                        int nameStart = gameEntries[i].indexOf('"') + 1;
+                        int nameEnd = gameEntries[i].indexOf('"', nameStart);
+                        if (nameStart > 0 && nameEnd > nameStart) {
+                            gameName = gameEntries[i].substring(nameStart, nameEnd);
+                        }
+                        
+                        // Extract game description
+                        int descStart = gameEntries[i].indexOf("gameDescription\":") + 17;
+                        int descEnd = gameEntries[i].indexOf('"', descStart);
+                        if (descStart > 16 && descEnd > descStart) {
+                            gameDescription = gameEntries[i].substring(descStart, descEnd);
+                        }
+                        
+                        if (gameName != null) {
+                            descriptions.put(gameName, gameDescription);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing game entry: " + e.getMessage());
+                    }
                 }
             }
+            
         } catch (IOException e) {
-            System.err.println("Error reading game titles: " + e.getMessage());
-        }
-
-        try (BufferedReader descReader = new BufferedReader(new InputStreamReader(GameDetail.class.getResourceAsStream("/gamedesc.txt")))) {
-            String line;
-            while ((line = descReader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    descs.add(line.trim());
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading game descriptions: " + e.getMessage());
-        }
-
-        for (int i = 0; i < titles.size() && i < descs.size(); i++) {
-            descriptions.put(titles.get(i), descs.get(i));
+            System.err.println("Error reading game data: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error parsing game data: " + e.getMessage());
         }
         return descriptions;
     }

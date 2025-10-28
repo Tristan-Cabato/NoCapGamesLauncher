@@ -3,6 +3,7 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
 import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
@@ -13,14 +14,17 @@ import javax.swing.border.EmptyBorder;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.json.*;
-
-import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 
 public class Search extends ThemePanel {
     private final mainFrame frame;
@@ -60,7 +64,7 @@ public class Search extends ThemePanel {
         }
         
         // Load from store
-        ArrayList<String> storeTitles = resourceLoader.loadGamesFromFile("/store_games.txt");
+        ArrayList<String> storeTitles = NameFormatting.getGameTitlesFromJson();
         for (String title : storeTitles) {
             if (!allGameTitles.contains(title)) {
                 allGameTitles.add(title);
@@ -92,7 +96,22 @@ public class Search extends ThemePanel {
     }
     
     private ArrayList<String> getStoreTitles() {
-        return resourceLoader.loadGamesFromFile("/store_games.txt");
+        ArrayList<String> titles = new ArrayList<>();
+        try (InputStream is = getClass().getResourceAsStream("/store_games.json");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            
+            String json = reader.lines().collect(Collectors.joining());
+            JSONArray gamesArray = new JSONArray(json);
+            
+            for (int i = 0; i < gamesArray.length(); i++) {
+                JSONObject game = gamesArray.getJSONObject(i);
+                String gameName = game.getString("gameName");
+                titles.add(gameName);
+            }
+        } catch (Exception e) {
+            System.err.println("Error reading store_games.json: " + e.getMessage());
+        }
+        return titles;
     }
 
     private void createContentView() {

@@ -1,20 +1,18 @@
 package com.mycompany.nocapgameslauncher.gui.userManager;
 
-import java.time.LocalDateTime;
-
 public class GameMetadata {
     private final String gameId;
     private final String gameName;
     private final String executablePath;
-    private final LocalDateTime lastPlayed;
-    private final long playTime;
+    private final String imagePath;
+    private final String gameDescription;
 
-    public GameMetadata(String gameId, String gameName, String executablePath, LocalDateTime lastPlayed, long playTime) {
+    public GameMetadata(String gameId, String gameName, String executablePath, String imagePath, String gameDescription) {
         this.gameId = gameId;
         this.gameName = gameName;
         this.executablePath = executablePath;
-        this.lastPlayed = lastPlayed;
-        this.playTime = playTime;
+        this.imagePath = imagePath;
+        this.gameDescription = gameDescription;
     }
 
     public String getGameId() {
@@ -29,11 +27,11 @@ public class GameMetadata {
         return executablePath;
     }
 
-    public LocalDateTime getLastPlayed() {
-        return lastPlayed;
+    public String getImagePath() {
+        return imagePath;
     }
 
-    public long getPlayTime() {
-        return playTime;
+    public String getGameDescription() {
+        return gameDescription;
     }
 }

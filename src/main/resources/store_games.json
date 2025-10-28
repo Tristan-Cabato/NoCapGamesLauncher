@@ -1,30 +1,37 @@
 [
     {
-        "gameId": -1,
-        "gameIconPath": "src/main/resources/ImageResources/genshin impact.jpg",
+        "gameID": 1,
         "gameName": "genshin_impact",
-        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Genshin Impact.lnk",
+        "imageURL": "src/main/resources/ImageResources/genshin impact.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Genshin Impact.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameId": -1,
-        "gameIconPath": "src/main/resources/ImageResources/honkai star rail.jpg",
+        "gameID": 2,
         "gameName": "honkai_star_rail",
-        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Honkai Star Rail.lnk",
+        "imageURL": "src/main/resources/ImageResources/honkai star rail.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Honkai Star Rail.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameId": -1,
-        "gameIconPath": "src/main/resources/ImageResources/osu_lazer.jpg",
+        "gameID": 3,
         "gameName": "osu_lazer",
-        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\osu_lazer.lnk",
+        "imageURL": "src/main/resources/ImageResources/osu_lazer.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\osu_lazer.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameId": -1,
-        "gameIconPath": "src/main/resources/ImageResources/tlauncher.jpg",
+        "gameID": 4,
+        "gameName": "terraria",
+        "imageURL": "src/main/resources/ImageResources/terraria.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Terraria.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 5,
         "gameName": "tlauncher",
-        "executablePath": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\TLauncher.lnk",
+        "imageURL": "src/main/resources/ImageResources/tlauncher.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\TLauncher.lnk",
         "gameDescription": "This is a description"
     }
 ]
