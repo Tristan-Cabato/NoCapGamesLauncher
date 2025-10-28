@@ -33,5 +33,12 @@
         "imageURL": "src/main/resources/ImageResources/tlauncher.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\TLauncher.lnk",
         "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 6,
+        "gameName": "uma_musume",
+        "imageURL": "src/main/resources/ImageResources/uma musume.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Uma Musume.lnk",
+        "gameDescription": "This is a description"
     }
 ]

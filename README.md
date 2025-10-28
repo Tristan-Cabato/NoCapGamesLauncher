@@ -1,30 +1,77 @@
-# Testing Database Connect (2nd attempt)
-    - Install MySQL through (https://dev.mysql.com/downloads/installer)
-    - Workbench is the easiest way to prototype (https://dev.mysql.com/downloads/workbench)
-        - The website already detects your OS
-    - From my experience, root by default is always the top admin. BUT for some reason, it doesn't have all the permissions yet (It can create and grant somehow)
-        - Personally, I'm not using root to connect to the database, I created another one named Admin, modify as you will.
-    - I created the users table to make "Admin" at the very beginning | "Admin" is accessed via the user table in the database, not the mysql user itself
-    - I'm still thinking about what to use the gameURL logic in the database for, but the original idea for that was for the metadata. Which is how the current game knows everything about it, i.e Game Description, Game Image, File Path, etc.
+# Admin Database Megaquery
+    - Handles database creation, Table creation, and metadata creation
+    - Ideally, this and logging in are the only ones that should access the database, everything else will be through Prototype Pattern
+    - User ID generation is a bit janky right now. Unlike gamemetadata which is half-assed by truncating the table each generation, the User must exist at all times.
+    - The User table is a whole different story. It will be used for the Friends panel.
 
-    * Naming Convention
-        > Replace spaces with underscores
-        > Turn all characters to lowercase
-        > Avoid special characters (Though I plan to make that an edge case too, it will be replaced by an underscore)
-        > The database being in underscore is not a naming convention, for some reason, MySQL workbench just lowercases it
+# App Scanning
+    - Slowly transferring game scanning logic to json files. This way, its easy to map values
+    - Again, my bad, I don't know how to make it dynamic for MacOS
 
-    - Be very adamant about the connections, I hardcoded most of the Strings.
+# Game Store
+    - First to be transferred to json files
+    - This panel has all the games in the database, so it makes sense.
+        - Plan here is, the "Play" button is dynamic whether the current user owns the game or not.
+        - Adding the game puts it in the Library Panel, and by extension - the sidebar.
+    - Of course, this would mean that the source of the Library Panel is no longer library_games.txt, but the owned games key in the user json.
+        - PlayerOwnedGames[1, 5, 9] -> These Hash keys point to store_games.json, that's how its fetched
+        - Prototype in the instruction states "clone a Game metadata object when creating multiple user-owned copies of the same game," this is one. We aren't cloning an object per se, hell, we should avoid doing that - but we are "duplicating" values of a game without querying the database (Pointing to the same file).
 
 # Next Agenda
-    - Iterator Pattern
-    - Prototype
-    - File Generation
-    - Visitor Pattern
+    UI:
+        - Sidebar Panel should look more like the first version
+        - Remove the remember account checkbox, it will never be used
+        - Searchbar integration
+        - GameDetail.java is due for an overhaul 
+    
+    Metadata Interaction:
+        - As stated above, Library.java should reflect on the user metadata
+        - This would mean that upon login, Library and Sidebar should be relative to the current user metadata
+        - The User Metadata files are already there, I just don't know what the hell I'm doing
+
+    Put ts in the end of the stack:
+        - Iterator Pattern
+        - Visitor Pattern
+        - JavaFX integration
 
 
 ### Files Modified:
-    * NoCapGamesLauncher.java
-        1. Returned the login feature
-        2. "Database Initialized Successfully" is just the creation of the database, the users table, and the Admin user
-    * DatabaseHandler.java
-    * databaseMegaquery.java
+    >> Bout to touch the users (I am so sorry for how I name commits) <<
+    /database
+        ↳ DatabaseHandler.java
+        ↳ databaseMegaquery.java
+    /components
+        ↳ HeaderCreator.java
+            - Changed "ChangeAccount" and "Sign In/Login" to a singular "Logout"
+    /gui
+        ↳ Library.java
+        ↳ Store.java
+        ↳ LoginForm.java
+        ↳ Profile.java
+        ↳ Search.java
+    /resourceHandling
+        ↳ resourceLoader.java
+    /userManager
+        ↳ GameMetadata.java
+        ↳ UserGameData.java
+
+    >> Game Store diddit <<
+    /database
+        ↳ DatabaseHandler.java
+        ↳ databaseMegaquery.java
+    /gui
+        ↳ GameDetail.java
+        ↳ Search.java
+        ↳ Store.java
+    /resourceHandling
+        ↳ resourceLoader.java
+        ↳ NameFormatting.java
+    /userManager
+        ↳ GameMetadata.java
+
+    >> Game Launching <<
+    /gui
+        ↳ GameDetail.java
+
+    >> Megaquery, json Files, and Executables <<
+    README.md
