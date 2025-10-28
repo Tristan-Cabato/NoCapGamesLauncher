@@ -1,9 +1,12 @@
 package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
+import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
 import javax.swing.*;
+import javax.swing.Timer;
+
 import java.awt.*;
 import java.util.*;
 import java.io.*;
@@ -46,9 +49,40 @@ public class GameDetail extends ThemePanel {
         playButton.setForeground(Color.WHITE); // White text for contrast
         playButton.setOpaque(true); // Ensure background is painted
         playButton.setBorderPainted(false); // Remove border
+
         playButton.addActionListener(_ -> {
-            JOptionPane.showMessageDialog(this, "Launching " + gameTitleLabel.getText() + "...");
+            String gameTitle = gameTitleLabel.getText();
+            String gamePath = resourceLoader.RESOURCE_DIRECTORY + "Executables/" + 
+                            gameTitle + ".lnk";
+            
+            try {
+                File file = new File(gamePath);
+                if (file.exists()) {
+                    Desktop.getDesktop().open(file);
+                    JOptionPane optionPane = new JOptionPane(
+                    "Launching " + gameTitle + "...", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                    JDialog dialog = optionPane.createDialog("Game Launched");
+                    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                    dialog.setModal(false);
+                    dialog.setVisible(true);
+
+                    javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
+                        dialog.dispose();
+                    });
+                    timer.setRepeats(false);
+                    timer.start();
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                        "Executable not found at: " + gamePath, 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error launching game: " + e.getMessage());
+            }
         });
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setOpaque(false);
         buttonPanel.add(playButton);
