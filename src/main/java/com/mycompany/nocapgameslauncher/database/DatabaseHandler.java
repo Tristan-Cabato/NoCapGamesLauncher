@@ -13,6 +13,15 @@ import java.nio.file.*;
 import com.mycompany.nocapgameslauncher.gui.userManager.UserRepository;
 
 public class DatabaseHandler {
+    private static String currentUser;
+    
+    public static String getCurrentUser() {
+        return currentUser;
+    }
+    
+    public static void setCurrentUser(String username) {
+        currentUser = username;
+    }
     private static final Gson gson = new Gson();
     private static final String USERS_DIR = resourceLoader.RESOURCE_DIRECTORY + "Users/";
     private static final String DB_URL = "jdbc:mysql://localhost:3306/nocapserver";

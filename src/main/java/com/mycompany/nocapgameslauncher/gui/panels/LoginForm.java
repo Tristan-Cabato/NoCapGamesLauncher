@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import java.io.*;
+import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 
 public class LoginForm extends JPanel {
 
@@ -417,6 +418,8 @@ public class LoginForm extends JPanel {
         try {
             boolean ok = DatabaseHandler.login(username, password);
             if (ok) {
+                // Set the current user in DatabaseHandler
+                DatabaseHandler.setCurrentUser(username);
                 SwingUtilities.getWindowAncestor(this).dispose();
                 
                 if (username.equals("Admin")) {

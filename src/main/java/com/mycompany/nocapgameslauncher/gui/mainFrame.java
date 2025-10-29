@@ -9,11 +9,16 @@ import java.awt.*;
 
 public class mainFrame extends JFrame {
     private CardLayout cardLayout;
+    private Library libraryPanel;
     private JPanel mainPanel;
     private JPanel sidebarPanel;
     private GameDetail gameDetailPanel;
     private Search searchPanel;
     private String currentPanel = "LIBRARY";
+
+    public Library getLibraryPanel() {
+        return libraryPanel;
+    }
 
     public mainFrame() {
         initializeFrame();
@@ -36,9 +41,10 @@ public class mainFrame extends JFrame {
         mainPanel = new JPanel(cardLayout);
         
         // Create and add panels
+        libraryPanel = new Library(this);
         gameDetailPanel = new GameDetail(this);
         searchPanel = new Search(this);
-        mainPanel.add(new Library(this), "LIBRARY");
+        mainPanel.add(libraryPanel, "LIBRARY");
         mainPanel.add(new Store(this), "STORE");
         mainPanel.add(new Friends(this), "FRIENDS");
         mainPanel.add(new Profile(this), "PROFILE");

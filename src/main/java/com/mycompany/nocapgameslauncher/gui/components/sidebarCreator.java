@@ -1,6 +1,9 @@
 package com.mycompany.nocapgameslauncher.gui.components;
 
+import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
+import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
+import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
 import java.awt.*;
@@ -40,21 +43,46 @@ public class sidebarCreator {
         ownedGamesPanel.setLayout(new BoxLayout(ownedGamesPanel, BoxLayout.Y_AXIS));
         ownedGamesPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0)); // Indent
 
-        ArrayList<String> gameTitles = loadGamesFromFile("/library_games.txt");
-
-        if (gameTitles.isEmpty()) {
-            JLabel noGamesLabel = new JLabel("No games available.");
-            noGamesLabel.setForeground(LightModeToggle.getTextColor());
-            noGamesLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-            ownedGamesPanel.add(noGamesLabel);
-        } else {
-            for (String title : gameTitles) {
-                addGameItem(ownedGamesPanel, title, frame, onItemClick);
-            }
+        // Get current user's owned games
+        String currentUser = DatabaseHandler.getCurrentUser();
+        if (currentUser == null || currentUser.isEmpty()) {
+            return panel;
         }
-
+            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";
+            try (java.io.Reader reader = new java.io.FileReader(userJsonPath)) {
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            java.util.Map<String, Object> userData = gson.fromJson(reader, java.util.Map.class);
+            @SuppressWarnings("unchecked")
+            java.util.List<Double> ownedGameIdsDouble = (java.util.List<Double>) userData.get("ownedGameIds");
+            
+            // Convert Double IDs to Integer
+            java.util.List<Integer> ownedGameIds = new java.util.ArrayList<>();
+            if (ownedGameIdsDouble != null) {
+                for (Double id : ownedGameIdsDouble) {
+                    ownedGameIds.add(id.intValue());
+                }
+            }
+            
+            if (ownedGameIds == null || ownedGameIds.isEmpty()) {
+                JLabel noGamesLabel = new JLabel("No games available.");
+                noGamesLabel.setForeground(LightModeToggle.getTextColor());
+                noGamesLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+                ownedGamesPanel.add(noGamesLabel);
+            } else {
+                for (Integer gameId : ownedGameIds) {
+                    java.util.Map<String, String> gameDetails = resourceLoader.getGameById(gameId);
+                    if (gameDetails != null) {
+                        // Use the same name formatting as the store
+                        String formattedName = NameFormatting.formatGameName(gameDetails.get("gameName"));
+                        addGameItem(ownedGamesPanel, formattedName, frame, onItemClick);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading user data: " + e.getMessage());
+            e.printStackTrace();
+        }
         panel.add(ownedGamesPanel);
-        
         return panel;
     }
     
@@ -118,5 +146,12 @@ public class sidebarCreator {
             System.err.println("Error reading game list from " + filename + ": " + e.getMessage());
         }
         return games;
+    }
+
+    private static void ensureUsersDirectoryExists() {
+        java.io.File usersDir = new java.io.File("src/main/resources/users");
+        if (!usersDir.exists()) {
+            usersDir.mkdirs();
+        }
     }
 }

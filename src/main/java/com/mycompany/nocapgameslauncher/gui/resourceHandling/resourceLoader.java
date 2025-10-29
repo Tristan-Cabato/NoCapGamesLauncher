@@ -5,6 +5,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.swing.*;
+import org.json.*;
 
 import com.mycompany.nocapgameslauncher.gui.panels.*;
 
@@ -30,6 +31,30 @@ public class resourceLoader {
         return new ImageIcon(resourceLoader.class.getResource("/" + PROXYIMAGE));
     }
 
+    public static Map<String, String> getGameById(int gameId) {
+        String storeGamesPath = RESOURCE_DIRECTORY + "store_games.json";
+        try (BufferedReader reader = new BufferedReader(new FileReader(storeGamesPath))) {
+            String json = reader.lines().collect(java.util.stream.Collectors.joining());
+            JSONArray gamesArray = new JSONArray(json);
+            
+            for (int i = 0; i < gamesArray.length(); i++) {
+                JSONObject game = gamesArray.getJSONObject(i);
+                if (game.getInt("gameID") == gameId) {
+                    Map<String, String> gameDetails = new HashMap<>();
+                    gameDetails.put("gameName", game.getString("gameName"));
+                    gameDetails.put("description", game.optString("description", "No description available."));
+                    gameDetails.put("imageURL", game.optString("imageURL", ""));
+                    return gameDetails;
+                }
+            }
+            System.err.println("Game with ID " + gameId + " not found in " + storeGamesPath);
+        } catch (Exception e) {
+            System.err.println("Error loading game details for ID " + gameId + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     public static ArrayList<String> loadGamesFromFile(String filename) {
         ArrayList<String> games = new ArrayList<>();
         try {
