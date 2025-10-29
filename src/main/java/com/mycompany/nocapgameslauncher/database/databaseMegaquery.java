@@ -29,6 +29,8 @@ public class databaseMegaquery extends JFrame {
     private DatabaseHandler dbHandler = new DatabaseHandler();
     private JTextArea logArea;
     private JScrollPane scrollPane;
+    private int processedCount = 0;
+    private JSONArray gamesArray = new JSONArray();
     
     public databaseMegaquery() {
         initializeFrame();
@@ -70,9 +72,13 @@ public class databaseMegaquery extends JFrame {
         addMegaQueryButton(buttonPanel);
         
         // Add other buttons (scan, clear) if needed
-        JButton scanButton = new JButton("Scan and Process Games");
+        JButton scanButton = new JButton("Scan Games");
         scanButton.addActionListener(_ -> scanAndProcessGames());
         buttonPanel.add(scanButton);
+
+        JButton createButton = new JButton("Save to File");
+        createButton.addActionListener(_ -> saveGamesToFile());
+        buttonPanel.add(createButton);
         
         JButton clearButton = new JButton("Clear Log");
         clearButton.addActionListener(_ -> logArea.setText(""));
@@ -107,9 +113,7 @@ public class databaseMegaquery extends JFrame {
             return;
         }
         
-        JSONArray gamesArray = new JSONArray();
-        int processedCount = 0;
-        
+        gamesArray = new JSONArray(); // Reset the array for new scan
         String url = "jdbc:mysql://localhost:3306/nocapserver?useSSL=false&allowPublicKeyRetrieval=true";
         String user = "Admin";
         String password = "nocap";
@@ -144,15 +148,7 @@ public class databaseMegaquery extends JFrame {
                             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                                 if (generatedKeys.next()) {
                                     int generatedId = generatedKeys.getInt(1);
-                                    
-                                    JSONObject game = new JSONObject();
-                                    game.put("gameID", generatedId);
-                                    game.put("gameName", gameName);
-                                    game.put("gameURL", gamePath);
-                                    game.put("imageURL", gameIconPath);
-                                    game.put("gameDescription", gameDescription);
-                                    gamesArray.put(game);
-                                    
+                                    createGameMetadata(generatedId, gameName, gamePath, gameIconPath, gameDescription);
                                     logArea.append("Processed: " + fileName + " -> " + gameName + "\n");
                                     processedCount++;
                                 }
@@ -163,24 +159,40 @@ public class databaseMegaquery extends JFrame {
                     logArea.append("Error processing " + file.getName() + ": " + e.getMessage() + "\n");
                 }
             }
-            
-            // Save to JSON file
-            try {
-                Files.createDirectories(Paths.get("src/main/resources/"));
-                try (FileWriter writer = new FileWriter("src/main/resources/store_games.json")) {
-                    writer.write(gamesArray.toString(4));
-                    logArea.append("Saved " + processedCount + " games to store_games.json\n");
-                }
-            } catch (IOException e) {
-                logArea.append("Error saving games to file: " + e.getMessage() + "\n");
-            }
-            
-            logArea.append("Processing complete. " + processedCount + " games processed.\n");
-            
+                    
         } catch (SQLException e) {
             logArea.append("Database error: " + e.getMessage() + "\n");
         }
     }
+            
+    private void createGameMetadata(int gameId, String gameName, String gamePath, String imageUrl, String description) {
+        try {
+            JSONObject game = new JSONObject();
+            game.put("gameID", gameId);
+            game.put("gameName", gameName);
+            game.put("gameURL", gamePath);
+            game.put("imageURL", imageUrl);
+            game.put("gameDescription", description);
+            gamesArray.put(game);
+        } catch (JSONException e) {
+            logArea.append("Error creating game metadata: " + e.getMessage() + "\n");
+        }
+    }
+    
+    private void saveGamesToFile() {
+        try {
+            Files.createDirectories(Paths.get("src/main/resources/"));
+            try (FileWriter writer = new FileWriter("src/main/resources/store_games.json")) {
+                writer.write(gamesArray.toString(4));
+                logArea.append("Saved " + processedCount + " games to store_games.json\n");
+            }
+        } catch (IOException e) {
+            logArea.append("Error saving games to file: " + e.getMessage() + "\n");
+        }
+        
+        logArea.append("Processing complete. " + processedCount + " games processed.\n");
+    }
+
 
     private void addMegaQueryButton(JPanel buttonPanel) {
         JButton megaQueryButton = new JButton("Run MegaQuery");
