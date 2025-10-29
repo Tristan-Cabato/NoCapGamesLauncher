@@ -8,7 +8,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.SQLException;
+import java.sql.*;
+import java.io.*;
 
 public class LoginForm extends JPanel {
 
@@ -433,7 +434,7 @@ public class LoginForm extends JPanel {
             } else {
                 showModernError("Invalid username or password");
             }
-        } catch (SQLException ex) {
+        } catch (SQLException |IOException ex) {
             showModernError("Database connection error:\n" + ex.getMessage());
         }
     }

@@ -11,6 +11,7 @@ import java.awt.*;
 import java.util.*;
 import java.io.*;
 import javax.swing.border.EmptyBorder;
+import org.json.*;
 
 public class GameDetail extends ThemePanel {
 
@@ -92,9 +93,14 @@ public class GameDetail extends ThemePanel {
     }
 
     public void setGame(String gameTitle) {
+        setGame(gameTitle, null);
+    }
+    
+    public void setGame(String gameTitle, String description) {
         gameTitleLabel.setText(gameTitle);
-        String description = gameDescriptions.getOrDefault(gameTitle, "No description available for this game.");
-        gameDescriptionArea.setText(description);
+        if (description == null || description.trim().isEmpty()) {
+            description = gameDescriptions.getOrDefault(gameTitle, "No description available for this game.");
+        } gameDescriptionArea.setText(description);
     }
 
     private Map<String, String> loadGameDescriptions() {
@@ -110,41 +116,20 @@ public class GameDetail extends ThemePanel {
                 jsonContent.append(line.trim());
             }
             
-            // Simple JSON parsing
-            String content = jsonContent.toString();
-            int startIndex = content.indexOf('[') + 1;
-            int endIndex = content.lastIndexOf(']');
+            // Parse JSON using JSONObject
+            JSONArray gamesArray = new JSONArray(jsonContent.toString());
             
-            if (startIndex > 0 && endIndex > startIndex) {
-                String gamesArray = content.substring(startIndex, endIndex);
-                // Split by "gameName" to find each game entry
-                String[] gameEntries = gamesArray.split("\\{\\\"gameName\\\"\\s*:");
-
-                for (int i = 1; i < gameEntries.length; i++) {
-                    try {
-                        String gameName = null;
-                        String gameDescription = "No description available.";
-                        
-                        // Extract game name
-                        int nameStart = gameEntries[i].indexOf('"') + 1;
-                        int nameEnd = gameEntries[i].indexOf('"', nameStart);
-                        if (nameStart > 0 && nameEnd > nameStart) {
-                            gameName = gameEntries[i].substring(nameStart, nameEnd);
-                        }
-                        
-                        // Extract game description
-                        int descStart = gameEntries[i].indexOf("gameDescription\":") + 17;
-                        int descEnd = gameEntries[i].indexOf('"', descStart);
-                        if (descStart > 16 && descEnd > descStart) {
-                            gameDescription = gameEntries[i].substring(descStart, descEnd);
-                        }
-                        
-                        if (gameName != null) {
-                            descriptions.put(gameName, gameDescription);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error parsing game entry: " + e.getMessage());
+            for (int i = 0; i < gamesArray.length(); i++) {
+                try {
+                    JSONObject game = gamesArray.getJSONObject(i);
+                    String gameName = game.optString("gameName");
+                    String gameDescription = game.optString("gameDescription", "No description available.");
+                    
+                    if (gameName != null && !gameName.isEmpty()) {
+                        descriptions.put(gameName, gameDescription);
                     }
+                } catch (JSONException e) {
+                    System.err.println("Error parsing game entry at index " + i + ": " + e.getMessage());
                 }
             }
             

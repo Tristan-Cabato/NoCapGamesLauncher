@@ -61,6 +61,11 @@ public class mainFrame extends JFrame {
         gameDetailPanel.setGame(gameTitle);
         cardLayout.show(mainPanel, "GAME_DETAIL");
     }
+
+    public void showGameDetail(String gameTitle, String gameDescription) {
+        gameDetailPanel.setGame(gameTitle, gameDescription);
+        cardLayout.show(mainPanel, "GAME_DETAIL");
+    }
     
     public void performSearch(String query) {
         // Determine search scope based on current panel

@@ -1,12 +1,20 @@
 package com.mycompany.nocapgameslauncher.database;
 
-import java.sql.*;
-import java.util.*;
+import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.gui.userManager.UserGameData;
 
-import com.mycompany.nocapgameslauncher.gui.userManager.GameMetadata;
+import java.sql.*;
+
+import com.google.gson.*;
+
+import java.io.*;
+import java.nio.file.*;
+
+import com.mycompany.nocapgameslauncher.gui.userManager.UserRepository;
 
 public class DatabaseHandler {
-    // Change these values as you wish
+    private static final Gson gson = new Gson();
+    private static final String USERS_DIR = resourceLoader.RESOURCE_DIRECTORY + "Users/";
     private static final String DB_URL = "jdbc:mysql://localhost:3306/nocapserver";
     private static final String DB_USER = "Admin";
     private static final String DB_PASS = "nocap";
@@ -64,7 +72,7 @@ public class DatabaseHandler {
         }
     }
     
-        public static boolean login(String username, String password) throws SQLException {
+        public static boolean login(String username, String password) throws SQLException, IOException {
         String sql = "SELECT userID FROM users WHERE username = ? AND password = ?";
 
         try (Connection conn = getConnection();
@@ -73,7 +81,27 @@ public class DatabaseHandler {
             stmt.setString(1, username);
             stmt.setString(2, password);
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
+                boolean loginSuccess = rs.next();
+                if (loginSuccess && !username.equals("Admin")) {
+                    // Skip user data management for Admin user
+                    // For all other users, manage their data file
+                    UserRepository userRepo = new UserRepository();
+                    UserGameData userData = userRepo.loadUser(username);
+                    
+                    // If user data doesn't exist or needs to be refreshed
+                    if (userData == null) {
+                        userData = new UserGameData(username);
+                    }
+                    
+                    // Update user data with latest info
+                    userData.setUserID(getUserId(username));
+                    userData.setUsername(username);
+                    userData.setPassword(password); // Store the password (for testing only)
+                    
+                    // Save the user data (will overwrite existing file)
+                    userRepo.saveUser(userData);
+                }
+                return loginSuccess;
             }
         }
     }
@@ -92,32 +120,43 @@ public class DatabaseHandler {
         return -1; // User not found
     }
     
-    public static List<GameMetadata> getUserGames(int userId) throws SQLException {
-        List<GameMetadata> games;
-        games = new ArrayList<>();
-        String sql = "SELECT g.gameId, g.gameName, g.gameURL, g.imageURL, g.gameDescription " +
-                    "FROM user_games ug " +
-                    "JOIN games g ON ug.gameId = g.gameId " +
-                    "WHERE ug.userId = ?";
-                    
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, userId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    games.add(new GameMetadata(
-                        rs.getString("gameId"),
-                        rs.getString("gameName"),
-                        rs.getString("gameURL"),
-                        rs.getString("imageURL"),
-                        rs.getString("gameDescription")
-                    ));
-                }
+    public static UserGameData getUserGames(String username) {
+        String filename = USERS_DIR + username + ".json";
+        try {
+            String json = new String(Files.readAllBytes(Paths.get(filename)));
+            UserGameData data = gson.fromJson(json, UserGameData.class);
+            if (data == null) {
+                throw new IllegalStateException("Failed to parse user data for: " + username);
             }
+            return data;
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read user data for: " + username, e);
         }
-        return games;
     }
     
+    public static boolean addGameToUser(String username, int gameId) {
+        try {
+            UserGameData userData = getUserGames(username);
+            if (userData == null) return false;
+            
+            userData.addGame(gameId);
+            saveUserData(userData);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    private static void saveUserData(UserGameData userData) {
+        String filename = USERS_DIR + userData.getUsername() + ".json";
+        try (Writer writer = new FileWriter(filename)) {
+            gson.toJson(userData, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void updateGamePlayData(int userId, String gameId, long additionalPlayTime) throws SQLException {
         String updateSql = "UPDATE user_games SET lastPlayed = NOW(), playTime = playTime + ? " +
                          "WHERE userId = ? AND gameId = ?";

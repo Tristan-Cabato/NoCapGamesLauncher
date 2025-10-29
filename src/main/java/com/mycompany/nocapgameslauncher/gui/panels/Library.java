@@ -59,7 +59,11 @@ public class Library extends ThemePanel {
                     String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
                     ImageIcon gameIcon = resourceLoader.loadIcon(resourceLoader.PROXYIMAGE);
                     
-                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, () -> frame.showGameDetail(title));
+                    // Store the current description in a final variable for the lambda
+                    final String gameDescription = description;
+                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, () -> 
+                        frame.showGameDetail(title, gameDescription)
+                    );
                     JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
                     
                     // Load actual image in background
