@@ -1,21 +1,9 @@
-# Admin Database Megaquery
-    - Handles database creation, Table creation, and metadata creation
-    - Ideally, this and logging in are the only ones that should access the database, everything else will be through Prototype Pattern
-    - User ID generation is a bit janky right now. Unlike gamemetadata which is half-assed by truncating the table each generation, the User must exist at all times.
-    - The User table is a whole different story. It will be used for the Friends panel.
+# Separation of concerns
+    - Split Executable scanning (to database) and JSON generation (File Generation)
+    - This is to show that the database is accessed, not just a one time process
 
-# App Scanning
-    - Slowly transferring game scanning logic to json files. This way, its easy to map values
-    - Again, my bad, I don't know how to make it dynamic for MacOS
-
-# Game Store
-    - First to be transferred to json files
-    - This panel has all the games in the database, so it makes sense.
-        - Plan here is, the "Play" button is dynamic whether the current user owns the game or not.
-        - Adding the game puts it in the Library Panel, and by extension - the sidebar.
-    - Of course, this would mean that the source of the Library Panel is no longer library_games.txt, but the owned games key in the user json.
-        - PlayerOwnedGames[1, 5, 9] -> These Hash keys point to store_games.json, that's how its fetched
-        - Prototype in the instruction states "clone a Game metadata object when creating multiple user-owned copies of the same game," this is one. We aren't cloning an object per se, hell, we should avoid doing that - but we are "duplicating" values of a game without querying the database (Pointing to the same file).
+# Library
+    - Made the sidebar and the library panel reflect on the user metadata. Text files are no longer required.
 
 # Next Agenda
     UI:
@@ -25,8 +13,8 @@
         - GameDetail.java is due for an overhaul 
     
     Metadata Interaction:
-        - As stated above, Library.java should reflect on the user metadata
-        - This would mean that upon login, Library and Sidebar should be relative to the current user metadata
+        - Game Description should reflect on the metadata
+        - Play button should be dynamic
         - The User Metadata files are already there, I just don't know what the hell I'm doing
 
     Put ts in the end of the stack:
@@ -36,42 +24,38 @@
 
 
 ### Files Modified:
-    >> Bout to touch the users (I am so sorry for how I name commits) <<
+    >> Database | FileGen separate of concern <<
+    /database
+        ↳ databaseMegaquery.java
+    
+    >> Created user jsons <<
+    /pom.xml
+        - Added gson dependency. Imma be real I don't even know how it works but it keeps getting suggested
     /database
         ↳ DatabaseHandler.java
-        ↳ databaseMegaquery.java
-    /components
-        ↳ HeaderCreator.java
-            - Changed "ChangeAccount" and "Sign In/Login" to a singular "Logout"
-    /gui
+    /panels
+        ↳ GameDetail.java
         ↳ Library.java
-        ↳ Store.java
         ↳ LoginForm.java
-        ↳ Profile.java
-        ↳ Search.java
-    /resourceHandling
-        ↳ resourceLoader.java
     /userManager
-        ↳ GameMetadata.java
         ↳ UserGameData.java
-
-    >> Game Store diddit <<
+        ↳ UserRepository.java
+    /components
+        ↳ sidebarCreator.java
+    
+    >> Added User Library logic <<
     /database
         ↳ DatabaseHandler.java
-        ↳ databaseMegaquery.java
-    /gui
-        ↳ GameDetail.java
-        ↳ Search.java
-        ↳ Store.java
+    /panels
+        ↳ Library.java
+        ↳ LoginForm.java
+    /components
+        ↳ sidebarCreator.java
     /resourceHandling
         ↳ resourceLoader.java
-        ↳ NameFormatting.java
-    /userManager
-        ↳ GameMetadata.java
-
-    >> Game Launching <<
-    /gui
-        ↳ GameDetail.java
-
-    >> Megaquery, json Files, and Executables <<
-    README.md
+    /src/main/resources/Users
+        ↳ Test.json
+        ↳ safi.json
+    
+    >> User Library Integration <<
+        ↳ Readme.md
