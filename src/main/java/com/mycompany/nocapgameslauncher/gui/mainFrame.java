@@ -110,12 +110,20 @@ public class mainFrame extends JFrame {
 
     public void showGameDetail(String gameTitle) {
         showCard("GAME_DETAIL");
-        gameDetailPanel.setGame(gameTitle);
+        // Default to -1 if we don't have an ID
+        gameDetailPanel.setGame(gameTitle, -1);
     }
 
     public void showGameDetail(String gameTitle, String gameDescription) {
         showCard("GAME_DETAIL");
+        // Default to -1 if we don't have an ID
+        gameDetailPanel.setGame(gameTitle, -1);
         gameDetailPanel.setGame(gameTitle, gameDescription);
+    }
+    
+    public void showGameDetail(String gameTitle, int gameId) {
+        showCard("GAME_DETAIL");
+        gameDetailPanel.setGame(gameTitle, gameId);
     }
     
     public void performSearch(String query) {

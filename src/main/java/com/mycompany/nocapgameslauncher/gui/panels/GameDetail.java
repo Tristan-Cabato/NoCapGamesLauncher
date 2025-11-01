@@ -5,43 +5,65 @@ import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
 import javax.swing.*;
-import javax.swing.Timer;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
+import java.awt.AlphaComposite;
 import java.util.*;
 import java.io.*;
 import javax.swing.border.EmptyBorder;
 import org.json.*;
 
 public class GameDetail extends ThemePanel {
-
     private final mainFrame frame;
     private final JLabel gameTitleLabel;
     private final JTextArea gameDescriptionArea;
     private final JScrollPane descriptionScrollPane;
     private final ThemeButton playButton;
+    private final JLabel gameImageLabel;
     private boolean userOwned;
+    private static final ImageIcon DEFAULT_GAME_ICON;
 
     private final Map<String, String> gameDescriptions;
     private int currentGameId = -1;
 
+    // Initialize static default icon
+    static {
+        ImageIcon icon = resourceLoader.loadIcon("ImageResources/default_game_icon.jpg");
+        if (icon != null) {
+            Image img = icon.getImage();
+            DEFAULT_GAME_ICON = new ImageIcon(img.getScaledInstance(400, 400, Image.SCALE_SMOOTH));
+        } else {
+            // Create a simple placeholder if default icon is not found
+            BufferedImage img = new BufferedImage(400, 400, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = img.createGraphics();
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.fillRect(0, 0, 400, 400);
+            g2d.setColor(Color.DARK_GRAY);
+            g2d.setFont(new Font("Arial", Font.BOLD, 24));
+            g2d.drawString("No Image", 150, 200);
+            g2d.dispose();
+            DEFAULT_GAME_ICON = new ImageIcon(img);
+        }
+    }
+    
     public GameDetail(mainFrame frame) {
         super(new BorderLayout(30, 30));
         this.frame = frame;
         setBorder(new EmptyBorder(30, 30, 30, 30));
-        checkIfOwned();
 
         // Create main content panel with horizontal layout
         JPanel contentPanel = new JPanel(new BorderLayout(30, 0));
         contentPanel.setOpaque(false);
 
         // Left side - Game Image
-        JLabel gameImageLabel = new JLabel();
+        gameImageLabel = new JLabel();
         gameImageLabel.setPreferredSize(new Dimension(400, 400));
         gameImageLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gameImageLabel.setVerticalAlignment(SwingConstants.CENTER);
-        gameImageLabel.setBackground(Color.DARK_GRAY);
-        gameImageLabel.setOpaque(true);
+        gameImageLabel.setBackground(new Color(0, 0, 0, 0)); // Transparent background
+        gameImageLabel.setOpaque(false);
         
         // Right side - Game Info
         JPanel infoPanel = new JPanel(new BorderLayout(10, 20));
@@ -134,24 +156,39 @@ public class GameDetail extends ThemePanel {
     }
 
     private void checkIfOwned() {
-        if (currentGameId == -1) {
-            userOwned = false;
-            return;
-        }
+        System.out.println("=== Starting checkIfOwned() ===");
+        System.out.println("Current game ID: " + currentGameId);
         
         try {
-            // Get current user
             String currentUser = com.mycompany.nocapgameslauncher.database.DatabaseHandler.getCurrentUser();
-            if (currentUser == null || currentUser.isEmpty()) {
+            System.out.println("Current user: " + currentUser);
+            
+            if (currentUser == null || currentUser.trim().isEmpty()) {
+                System.out.println("No current user found, cannot check ownership");
                 userOwned = false;
                 return;
             }
             
-            // Load user's JSON file
             String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";
-            try (java.io.Reader reader = new java.io.FileReader(userJsonPath)) {
+            System.out.println("Looking for user file at: " + userJsonPath);
+            
+            File userFile = new File(userJsonPath);
+            
+            if (!userFile.exists()) {
+                System.out.println("User JSON file not found: " + userJsonPath);
+                userOwned = false;
+                return;
+            }
+            
+            try (java.io.Reader reader = new java.io.FileReader(userFile)) {
                 com.google.gson.Gson gson = new com.google.gson.Gson();
                 java.util.Map<String, Object> userData = gson.fromJson(reader, java.util.Map.class);
+                
+                if (userData == null) {
+                    System.out.println("Failed to parse user data from JSON");
+                    userOwned = false;
+                    return;
+                }
                 
                 // Get owned game IDs
                 @SuppressWarnings("unchecked")
@@ -159,9 +196,16 @@ public class GameDetail extends ThemePanel {
                 
                 // Check if current game ID is in the owned games list
                 if (ownedGameIds != null) {
+                    System.out.println("User's owned game IDs: " + ownedGameIds);
                     userOwned = ownedGameIds.stream()
-                            .anyMatch(id -> id.intValue() == currentGameId);
+                            .anyMatch(id -> {
+                                boolean match = (id != null && id.intValue() == currentGameId);
+                                System.out.println("Checking if " + id + " == " + currentGameId + ": " + match);
+                                return match;
+                            });
+                    System.out.println("Final ownership for game " + currentGameId + ": " + userOwned);
                 } else {
+                    System.out.println("No owned games found for user");
                     userOwned = false;
                 }
             }
@@ -187,28 +231,76 @@ public class GameDetail extends ThemePanel {
         }
         gameDescriptionArea.setText(description);
         
-        // Load game image if available
-        try {
-            String imagePath = "ImageResources/" + gameTitle.toLowerCase().replace(" ", "_") + ".jpg";
-            ImageIcon icon = resourceLoader.loadIcon(imagePath);
-            if (icon != null) {
-                Image img = icon.getImage();
-                Image scaledImg = img.getScaledInstance(400, 400, Image.SCALE_SMOOTH);
-                JLabel gameImageLabel = (JLabel) ((JPanel) getComponent(0)).getComponent(0);
-                gameImageLabel.setIcon(new ImageIcon(scaledImg));
+        // Show loading icon first
+        gameImageLabel.setIcon(new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE));
+        
+        // Load game image in background
+        new Thread(() -> {
+            try {
+                // Simulate loading time (similar to Store and Library)
+                Thread.sleep(600);
+                
+                String imagePath = "ImageResources/" + gameTitle.toLowerCase().replace(" ", "_") + ".jpg";
+                ImageIcon actualIcon = resourceLoader.loadIcon(imagePath);
+                
+                if (actualIcon != null) {
+                    // Scale the image to fit the label
+                    Image scaled = actualIcon.getImage().getScaledInstance(
+                        gameImageLabel.getWidth(), 
+                        gameImageLabel.getHeight(), 
+                        Image.SCALE_SMOOTH
+                    );
+                    
+                    // Update the UI on the Event Dispatch Thread
+                    SwingUtilities.invokeLater(() -> {
+                        gameImageLabel.setIcon(new ImageIcon(scaled));
+                        gameImageLabel.repaint();
+                    });
+                } else {
+                    // If no image found, use the default icon
+                    SwingUtilities.invokeLater(() -> {
+                        gameImageLabel.setIcon(DEFAULT_GAME_ICON);
+                    });
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading game image: " + e.getMessage());
+                try {
+                    Thread.sleep(100); // Simulate loading time even on error
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+                SwingUtilities.invokeLater(() -> {
+                    gameImageLabel.setIcon(DEFAULT_GAME_ICON);
+                });
             }
-        } catch (Exception e) {
-            System.err.println("Error loading game image: " + e.getMessage());
-        }
+        }, "GameDetail-ImageLoader-" + gameTitle).start();
     }
     
     public void setGame(String gameTitle, Integer gameId) {
+        if (gameTitle == null) return;
+        
         // Store the game ID for ownership check
-        if (gameId != null) {
-            this.currentGameId = gameId;
-            checkIfOwned();
-        }
+        int newGameId = (gameId != null) ? gameId : -1;
+        boolean gameChanged = (this.currentGameId != newGameId);
+        this.currentGameId = newGameId;
+        
+        System.out.println("Setting game: " + gameTitle + " with ID: " + this.currentGameId);
+        
+        // Update the game details first
         setGame(gameTitle, (String)null);
+        
+        // Then check ownership if needed
+        if (gameChanged || playButton == null) {
+            SwingUtilities.invokeLater(() -> {
+                checkIfOwned();
+                // Ensure the button text is updated
+                if (playButton != null) {
+                    playButton.setText(userOwned ? "Play Game" : "Add to Library");
+                    playButton.revalidate();
+                    playButton.repaint();
+                }
+            });
+        }
     }
 
     private Map<String, String> loadGameDescriptions() {

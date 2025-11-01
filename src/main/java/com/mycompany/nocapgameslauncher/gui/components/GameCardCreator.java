@@ -11,10 +11,10 @@ public class GameCardCreator {
     public static final int CARD_HEIGHT = 280;
     
     public static JPanel createGameCard(String title, String description, ImageIcon icon) {
-        return createGameCard(title, description, icon, null);
+        return createGameCard(title, description, icon, -1, null);
     }
     
-    public static JPanel createGameCard(String title, String description, ImageIcon icon, Runnable onClickAction) {
+    public static JPanel createGameCard(String title, String description, ImageIcon icon, int gameId, Runnable onClickAction) {
         ThemePanel card = new ThemePanel(new BorderLayout(10, 10)) {
             @Override
             public Dimension getPreferredSize() {
@@ -31,6 +31,8 @@ public class GameCardCreator {
                 return new Dimension(CARD_WIDTH, CARD_HEIGHT);
             }
         };
+
+        card.putClientProperty("gameId", gameId);
         
         // Set fixed size - all three size methods to ensure it stays fixed
         card.setPreferredSize(new Dimension(CARD_WIDTH, CARD_HEIGHT));

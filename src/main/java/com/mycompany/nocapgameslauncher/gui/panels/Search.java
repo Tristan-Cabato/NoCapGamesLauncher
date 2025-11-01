@@ -218,7 +218,7 @@ public class Search extends ThemePanel {
                     ImageIcon gameIcon = resourceLoader.loadIcon(resourceLoader.PROXYIMAGE);
                     
                     // Create the card with the proxy image first
-                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, () -> frame.showGameDetail(title));
+                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, -1, () -> frame.showGameDetail(title));
                     
                     // Store a reference to the card's image label
                     JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);

@@ -56,9 +56,11 @@ public class Store extends ThemePanel {
             } else {
                 System.out.println("Successfully loaded " + gameTitles.size() + " games");
                 
-                for (String title : gameTitles) {
+                for (int i = 0; i < gameTitles.size(); i++) {
+                    String title = gameTitles.get(i);
                     String description = "No description available for this game";
                     String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
+                    int gameId = i + 1;
                     
                     // Create the card with a proxy icon
                     ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
@@ -66,7 +68,8 @@ public class Store extends ThemePanel {
                         title,
                         description,
                         proxyIcon,
-                        () -> frame.showGameDetail(title, description)
+                        gameId,
+                        () -> frame.showGameDetail(title, gameId)
                     );
                     
                     // Get the image label from the card

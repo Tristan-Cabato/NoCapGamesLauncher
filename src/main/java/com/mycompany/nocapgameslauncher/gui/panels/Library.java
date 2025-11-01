@@ -102,7 +102,8 @@ public class Library extends ThemePanel{
                             title,
                             description,
                             gameIcon,
-                            () -> frame.showGameDetail(title, description)
+                            gameId,
+                            () -> frame.showGameDetail(title, gameId)
                         );
                         
                         JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
