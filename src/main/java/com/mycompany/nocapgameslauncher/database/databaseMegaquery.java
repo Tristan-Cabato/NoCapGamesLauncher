@@ -9,21 +9,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 import org.json.JSONException;
 
 import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
-import com.mycompany.nocapgameslauncher.gui.panels.LoginForm;
+import com.mycompany.nocapgameslauncher.game_manager.Game;
+import com.mycompany.nocapgameslauncher.game_manager.GameMetadata;
+import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
 
 public class databaseMegaquery extends JFrame {
     private DatabaseHandler dbHandler = new DatabaseHandler();
@@ -180,17 +179,22 @@ public class databaseMegaquery extends JFrame {
     }
     
     private void saveGamesToFile() {
-        try {
-            Files.createDirectories(Paths.get("src/main/resources/"));
-            try (FileWriter writer = new FileWriter("src/main/resources/store_games.json")) {
-                writer.write(gamesArray.toString(4));
-                logArea.append("Saved " + processedCount + " games to store_games.json\n");
-            }
-        } catch (IOException e) {
-            logArea.append("Error saving games to file: " + e.getMessage() + "\n");
+        ArrayList<Game> games = new ArrayList<>();
+        
+        // Convert JSON array to List<Game>
+        for (int i = 0; i < gamesArray.length(); i++) {
+            JSONObject gameJson = gamesArray.getJSONObject(i);
+            Game game = new GameMetadata(  // Changed from Game to GameMetadata
+                gameJson.getString("gameName"),
+                gameJson.optString("gameDescription", ""),
+                gameJson.optString("imageURL", ""),
+                i + 1
+            );
+            games.add(game);
         }
         
-        logArea.append("Processing complete. " + processedCount + " games processed.\n");
+        // Save using GameRepository
+        GameRepository.saveGames(games);
     }
 
 

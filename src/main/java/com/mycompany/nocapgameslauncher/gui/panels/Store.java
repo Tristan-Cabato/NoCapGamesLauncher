@@ -6,8 +6,8 @@ import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
-
-import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CARD_WIDTH;
+import com.mycompany.nocapgameslauncher.game_manager.Game;
+import com.mycompany.nocapgameslauncher.game_manager.GameIterator;
 
 import javax.swing.*;
 
@@ -16,6 +16,7 @@ import java.util.*;
 
 import javax.swing.border.EmptyBorder;
 
+import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
 import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
 
 public class Store extends ThemePanel {
@@ -46,78 +47,68 @@ public class Store extends ThemePanel {
             gameCardsList = new ArrayList<>();
             
             // Load games using the existing utility method
-            ArrayList<String> gameTitles = NameFormatting.getGameTitlesFromJson();
-            
-            if (gameTitles.isEmpty()) {
-                JLabel errorLabel = new JLabel("No games found. Could not load store data.");
-                errorLabel.setForeground(Color.RED);
-                errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                cardsPanel.add(errorLabel);
-            } else {
-                System.out.println("Successfully loaded " + gameTitles.size() + " games");
-                
-                for (int i = 0; i < gameTitles.size(); i++) {
-                    String title = gameTitles.get(i);
-                    String description = "No description available for this game";
-                    String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
-                    int gameId = i + 1;
-                    
-                    // Create the card with a proxy icon
-                    ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
-                    JPanel card = GameCardCreator.createGameCard(
-                        title,
-                        description,
-                        proxyIcon,
-                        gameId,
-                        () -> frame.showGameDetail(title, gameId)
-                    );
-                    
-                    // Get the image label from the card
-                    JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
-                    
-                    // Load actual image in background
-                    new Thread(() -> {
-                        try {
-                            Thread.sleep(1200); // 1.2 seconds | Simulate loading
-                            ImageIcon actualIcon = resourceLoader.loadIcon(iconPath);
-                            if (actualIcon != null) {
-                                SwingUtilities.invokeLater(() -> {
-                                    // Update the image label with the actual icon
-                                    Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
-                                    imageLabel.setIcon(new ImageIcon(scaled));
-                                    imageLabel.repaint();
-                                });
-                            }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }, "ImageLoader-" + title).start();
-                    
-                    gameCardsList.add(card);
-                    cardsPanel.add(card);
-                }
-            }
+            try {
+                java.util.List<Game> games = GameRepository.loadGames();
 
-            scrollPane = new JScrollPane(cardsPanel);
-            scrollPane.setBorder(BorderFactory.createEmptyBorder());
-            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            add(scrollPane, BorderLayout.CENTER);
-            scrollPane.getViewport().setOpaque(false);
-            
+                if (games.isEmpty()) {
+                    JLabel errorLabel = new JLabel("No games found. Could not load store data.");
+                    errorLabel.setForeground(Color.RED);
+                    errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                    cardsPanel.add(errorLabel);
+                } else {
+                    System.out.println("Successfully loaded " + games.size() + " games");
+                    
+                    GameIterator iterator = new GameIterator(games);
+                    while (iterator.hasNext()) {
+                        Game game = iterator.next();
+                        ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
+                        JPanel card = GameCardCreator.createGameCard(
+                            game.getTitle(),
+                            game.getDescription(),
+                            proxyIcon,
+                            game.getID(),
+                            () -> frame.showGameDetail(game.getTitle(), game.getID())
+                        );
+                        
+                        // Get the image label from the card
+                        JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+                        
+                        // Load actual image in background
+                        new Thread(() -> {
+                            try {
+                                Thread.sleep(1200); // 1.2 seconds | Simulate loading
+                                ImageIcon actualIcon = resourceLoader.loadIcon(game.getImageUrl());
+                                if (actualIcon != null) {
+                                    SwingUtilities.invokeLater(() -> {
+                                        // Update the image label with the actual icon
+                                        Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+                                        imageLabel.setIcon(new ImageIcon(scaled));
+                                        imageLabel.repaint();
+                                    });
+                                }
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }, "ImageLoader-" + game.getTitle()).start();
+                        
+                        gameCardsList.add(card);
+                        cardsPanel.add(card);
+                    }
+                }
+
+                scrollPane = new JScrollPane(cardsPanel);
+                scrollPane.setBorder(BorderFactory.createEmptyBorder());
+                scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                add(scrollPane, BorderLayout.CENTER);
+                scrollPane.getViewport().setOpaque(false);   
         } catch (Exception e) {
             System.err.println("Error initializing Store panel: " + e.getMessage());
             e.printStackTrace();
             add(new JLabel("Error loading store content: " + e.getMessage()), BorderLayout.CENTER);
         }
+    } catch (Exception e) { System.out.println("Error"); }
     }
 
-    private static class GameData {
-        int gameID;
-        String gameName;
-        String imageURL;
-        String gameURL;
-        String gameDescription;
-    }
 
     @Override
     public void updateTheme() {
@@ -198,25 +189,6 @@ public class Store extends ThemePanel {
                     ((JLabel) comp).setIcon(null);
                 }
                 card.removeAll();
-            }
-        }
-    }
-    
-    private void cleanupComponents(Container container) {
-        for (Component comp : container.getComponents()) {
-            // Clean up any image resources
-            if (comp instanceof JLabel) {
-                Icon icon = ((JLabel)comp).getIcon();
-                if (icon instanceof ImageIcon) {
-                    Image image = ((ImageIcon)icon).getImage();
-                    if (image != null) {
-                        image.flush();
-                    }
-                }
-            }
-            // Recursively clean up child components
-            if (comp instanceof Container) {
-                cleanupComponents((Container)comp);
             }
         }
     }

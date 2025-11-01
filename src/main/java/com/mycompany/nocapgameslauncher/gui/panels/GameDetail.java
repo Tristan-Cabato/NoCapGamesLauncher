@@ -236,8 +236,18 @@ public class GameDetail extends ThemePanel {
         
         System.out.println("Setting game: " + gameTitle + " with ID: " + this.currentGameId);
         
-        // Update the game details first
-        setGame(gameTitle, (String)null);
+        // Try to get description from game data if we have an ID
+        String description = null;
+        if (this.currentGameId > 0) {
+            Map<String, String> gameDetails = resourceLoader.getGameById(this.currentGameId);
+            if (gameDetails != null) {
+                description = gameDetails.get("gameDescription");
+                System.out.println("Found game details: " + gameDetails);
+            }
+        }
+        
+        // Update the game details with the found description or null
+        setGame(gameTitle, description);
         
         // Then check ownership if needed
         if (gameChanged || playButton == null) {
@@ -299,11 +309,6 @@ public class GameDetail extends ThemePanel {
             userGameData.addGame(currentGameId);
             userOwned = true;
             updateButtonStates();
-            JOptionPane.showMessageDialog(this, 
-                "Game added to your library!", 
-                "Success", 
-                JOptionPane.INFORMATION_MESSAGE
-            );
         } catch (Exception e) {
             System.err.println("Error adding game to library: " + e.getMessage());
             JOptionPane.showMessageDialog(
@@ -323,12 +328,6 @@ public class GameDetail extends ThemePanel {
             userGameData.removeGame(currentGameId);
             userOwned = false;
             updateButtonStates();
-            JOptionPane.showMessageDialog(
-                this,
-                "Game removed from your library!",
-                "Success",
-                JOptionPane.INFORMATION_MESSAGE
-            );
         } catch (Exception e) {
             System.err.println("Error removing game from library: " + e.getMessage());
             JOptionPane.showMessageDialog(

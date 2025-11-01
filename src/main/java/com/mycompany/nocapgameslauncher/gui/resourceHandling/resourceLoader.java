@@ -42,7 +42,7 @@ public class resourceLoader {
                 if (game.getInt("gameID") == gameId) {
                     Map<String, String> gameDetails = new HashMap<>();
                     gameDetails.put("gameName", game.getString("gameName"));
-                    gameDetails.put("description", game.optString("description", "No description available."));
+                    gameDetails.put("gameDescription", game.optString("gameDescription", "No description available."));
                     gameDetails.put("imageURL", game.optString("imageURL", ""));
                     return gameDetails;
                 }
