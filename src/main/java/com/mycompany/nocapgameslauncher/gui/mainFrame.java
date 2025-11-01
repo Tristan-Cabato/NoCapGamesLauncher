@@ -75,7 +75,9 @@ public class mainFrame extends JFrame {
                 ((Library) currentPanel).hidePanel();
             } else if (currentPanel instanceof Store) {
                 ((Store) currentPanel).hidePanel();
-            } 
+            } else if (currentPanel == gameDetailPanel) {
+                gameDetailPanel.setVisible(false);
+            }
         }
         
         // Show new panel
@@ -92,6 +94,9 @@ public class mainFrame extends JFrame {
                 storePanel.showPanel();
                 currentPanel = storePanel;
             } case "GAME_DETAIL" -> {
+                if (gameDetailPanel.getParent() == null) {
+                    mainPanel.add(gameDetailPanel, "GAME_DETAIL");
+                }
                 gameDetailPanel.setVisible(true);
                 currentPanel = gameDetailPanel;
             } case "SEARCH" -> {
