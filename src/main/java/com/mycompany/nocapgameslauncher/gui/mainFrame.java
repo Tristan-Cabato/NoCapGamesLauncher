@@ -10,11 +10,16 @@ import java.awt.*;
 public class mainFrame extends JFrame {
     private CardLayout cardLayout;
     private Library libraryPanel;
+    private Store storePanel;
+    private boolean storeInitialized = false;
     private JPanel mainPanel;
     private JPanel sidebarPanel;
     private GameDetail gameDetailPanel;
     private Search searchPanel;
-    private String currentPanel = "LIBRARY";
+    private Friends friendsPanel;
+    private Profile profilePanel;
+    
+    private JPanel currentPanel;
 
     public Library getLibraryPanel() {
         return libraryPanel;
@@ -40,14 +45,19 @@ public class mainFrame extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         
-        // Create and add panels
+        // Initialize only the library panel by default
         libraryPanel = new Library(this);
         gameDetailPanel = new GameDetail(this);
         searchPanel = new Search(this);
+        friendsPanel = new Friends(this);
+        profilePanel = new Profile(this);
+
+        // Add all panels to the card layout
         mainPanel.add(libraryPanel, "LIBRARY");
-        mainPanel.add(new Store(this), "STORE");
-        mainPanel.add(new Friends(this), "FRIENDS");
-        mainPanel.add(new Profile(this), "PROFILE");
+        // Store panel will be added when first accessed
+        mainPanel.add(new JPanel(), "STORE"); // Placeholder
+        mainPanel.add(friendsPanel, "FRIENDS");
+        mainPanel.add(profilePanel, "PROFILE");
         mainPanel.add(gameDetailPanel, "GAME_DETAIL");
         mainPanel.add(searchPanel, "SEARCH");
 
@@ -59,30 +69,60 @@ public class mainFrame extends JFrame {
     }
 
     public void showCard(String cardName) {
-        currentPanel = cardName;
+        // Hide current panel
+        if (currentPanel != null) {
+            if (currentPanel instanceof Library) {
+                ((Library) currentPanel).hidePanel();
+            } else if (currentPanel instanceof Store) {
+                ((Store) currentPanel).hidePanel();
+            } 
+        }
+        
+        // Show new panel
+        switch (cardName) {
+            case "LIBRARY" -> {
+                libraryPanel.showPanel();
+                currentPanel = libraryPanel;
+            } case "STORE" -> {
+                if (!storeInitialized) {
+                    storePanel = new Store(this);
+                    mainPanel.add(storePanel, "STORE");
+                    storeInitialized = true;
+                }
+                storePanel.showPanel();
+                currentPanel = storePanel;
+            } case "GAME_DETAIL" -> {
+                gameDetailPanel.setVisible(true);
+                currentPanel = gameDetailPanel;
+            } case "SEARCH" -> {
+                searchPanel.setVisible(true);
+                currentPanel = searchPanel;
+            } default -> { return; }
+        }
+        
         cardLayout.show(mainPanel, cardName);
     }
 
     public void showGameDetail(String gameTitle) {
+        showCard("GAME_DETAIL");
         gameDetailPanel.setGame(gameTitle);
-        cardLayout.show(mainPanel, "GAME_DETAIL");
     }
 
     public void showGameDetail(String gameTitle, String gameDescription) {
+        showCard("GAME_DETAIL");
         gameDetailPanel.setGame(gameTitle, gameDescription);
-        cardLayout.show(mainPanel, "GAME_DETAIL");
     }
     
     public void performSearch(String query) {
         // Determine search scope based on current panel
         String searchScope = "ALL";
-        if (currentPanel.equals("LIBRARY")) {
+        if (currentPanel == libraryPanel) {
             searchScope = "LIBRARY";
-        } else if (currentPanel.equals("STORE")) {
+        } else if (currentPanel == storePanel) {
             searchScope = "STORE";
         }
         
         searchPanel.performSearch(query, searchScope);
-        cardLayout.show(mainPanel, "SEARCH");
+        showCard("SEARCH");
     }
 }

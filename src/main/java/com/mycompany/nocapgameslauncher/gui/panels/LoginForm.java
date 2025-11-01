@@ -216,17 +216,6 @@ public class LoginForm extends JPanel {
         gbc.gridy = 1;
         panel.add(createFieldGroup("PASSWORD", passField), gbc);
         
-        // Remember me checkbox
-        JCheckBox rememberMe = new JCheckBox("Remember me");
-        rememberMe.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        rememberMe.setForeground(LightModeToggle.getTextColor());
-        rememberMe.setOpaque(false);
-        rememberMe.setFocusPainted(false);
-        rememberMe.setHorizontalAlignment(SwingConstants.LEFT);
-        gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 15, 0); // Reduced from 25 to 15
-        panel.add(rememberMe, gbc);
-        
         // Login button
         RoundedButton loginBtn = new RoundedButton("LOGIN", LightModeToggle.getAccentColor());
         loginBtn.addActionListener(e -> {
@@ -324,7 +313,6 @@ public class LoginForm extends JPanel {
 
     private JTextField createModernTextField(String placeholder) {
         JTextField field = new JTextField() {
-            // Simple placeholder text implementation
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -375,8 +363,20 @@ public class LoginForm extends JPanel {
     }
 
     private JPasswordField createModernPasswordField(String placeholder) {
-        // Uses the same styling as JTextField
-        JPasswordField field = new JPasswordField();
+        JPasswordField field = new JPasswordField() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getPassword().length == 0 && !isFocusOwner()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setColor(LightModeToggle.getTextColor().darker().darker());
+                    g2.setFont(getFont().deriveFont(Font.ITALIC));
+                    Insets insets = getInsets();
+                    g2.drawString(placeholder, insets.left, getHeight() / 2 + g2.getFontMetrics().getAscent() / 2 - 2);
+                    g2.dispose();
+                }
+            }
+        };
         field.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         field.setPreferredSize(new Dimension(FORM_WIDTH, FIELD_HEIGHT));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, FIELD_HEIGHT));

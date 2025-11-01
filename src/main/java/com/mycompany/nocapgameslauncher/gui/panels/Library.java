@@ -13,8 +13,6 @@ import javax.swing.border.EmptyBorder;
 
 import java.awt.*;
 import java.io.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +21,7 @@ import java.util.Objects;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
-public class Library extends ThemePanel {
+public class Library extends ThemePanel{
     private final mainFrame frame;
     private ThemePanel cardsPanel;
     private List<JPanel> gameCardsList;
@@ -50,14 +48,21 @@ public class Library extends ThemePanel {
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(20, 20, 20, 20));
         
-        // Title
+        // Title panel with proper theming
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setOpaque(false);
         titleLabel = new JLabel("My Library");
+        titleLabel.setForeground(LightModeToggle.getTextColor());
         FontManager.setFont(titleLabel, Font.BOLD, 40);
-        add(titleLabel, BorderLayout.NORTH);
+        titlePanel.add(titleLabel, BorderLayout.WEST);
+        titlePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        add(titlePanel, BorderLayout.NORTH);
         
-        // Main content panel
+        // Main content panel with proper theming
         ThemePanel contentPanel = new ThemePanel(new BorderLayout());
-        contentPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        contentPanel.setBackground(LightModeToggle.getComponentColor());
+        contentPanel.setOpaque(true);
+        contentPanel.setBorder(new EmptyBorder(0, 20, 20, 20));
         
         // Cards panel with grid layout
         cardsPanel = new ThemePanel(new GridLayout(0, 3, 20, 20));
@@ -100,8 +105,11 @@ public class Library extends ThemePanel {
                             () -> frame.showGameDetail(title, description)
                         );
                         
-                        // Get the image label from the card
                         JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+                        
+                        // Create a proxy image that will load the actual image when needed
+                        ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
+                        imageLabel.setIcon(proxyIcon);
                         
                         // Load actual image in background
                         new Thread(() -> {
@@ -113,6 +121,7 @@ public class Library extends ThemePanel {
                                         // Update the image label with the actual icon
                                         Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
                                         imageLabel.setIcon(new ImageIcon(scaled));
+                                        imageLabel.repaint();
                                     });
                                 }
                             } catch (InterruptedException e) {
@@ -126,8 +135,8 @@ public class Library extends ThemePanel {
                 }
             }
             
-            JScrollPane scrollPane = new JScrollPane(cardsPanel);
-            scrollPane.setBorder(null);
+            scrollPane = new JScrollPane(cardsPanel);
+            scrollPane.setBorder(BorderFactory.createEmptyBorder());
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             scrollPane.getViewport().setBackground(LightModeToggle.getComponentColor());
@@ -146,28 +155,6 @@ public class Library extends ThemePanel {
             e.printStackTrace();
         }
     }
-    
-    private void updateGridColumns() {
-        if (cardsPanel == null || gameCardsList.isEmpty()) {
-            return;
-        }
-        
-        int availableWidth = getWidth() - 40; // Subtract left and right padding
-        if (availableWidth <= 0) {
-            return;
-        }
-        
-        // Calculate optimal number of columns based on available width
-        int columns = Math.max(1, availableWidth / (CARD_WIDTH + CARD_GAP));
-        
-        // Update the grid layout if columns changed
-        GridLayout layout = (GridLayout) cardsPanel.getLayout();
-        if (layout.getColumns() != columns) {
-            cardsPanel.setLayout(new GridLayout(0, columns, CARD_GAP, CARD_GAP));
-            cardsPanel.revalidate();
-            cardsPanel.repaint();
-        }
-    }
 
     @Override
     public void updateTheme() {
@@ -177,6 +164,107 @@ public class Library extends ThemePanel {
         }
         if (cardsPanel != null) {
             cardsPanel.updateTheme();
+        }
+    }
+
+    // Panel state management
+    private JScrollPane scrollPane;
+    private boolean isContentCreated = false;
+    
+    public void showPanel() {
+        // Always recreate content to ensure fresh state
+        if (isContentCreated) {
+            removeAll();
+            isContentCreated = false;
+        }
+        
+        if (!isContentCreated) {
+            createContentView();
+            isContentCreated = true;
+        }
+        
+        // Update theme before showing
+        updateTheme();
+        
+        setVisible(true);
+        if (scrollPane != null) {
+            scrollPane.setVisible(true);
+            scrollPane.getViewport().setOpaque(false);
+            scrollPane.setOpaque(false);
+            scrollPane.revalidate();
+        }
+        
+        // Ensure proper background painting
+        setOpaque(true);
+        if (cardsPanel != null) {
+            cardsPanel.setOpaque(true);
+            cardsPanel.repaint();
+        }
+        
+        revalidate();
+        repaint();
+    }
+    
+    public void hidePanel() {
+        // Clean up resources but don't remove components yet
+        cleanupHeavyResources();
+        setVisible(false);
+        if (scrollPane != null) {
+            scrollPane.setVisible(false);
+        }
+    }
+    
+    private void cleanupHeavyResources() {
+        // Clean up any heavy resources like images
+        if (gameCardsList != null) {
+            for (JPanel card : gameCardsList) {
+                cleanupCard(card);
+            }
+            gameCardsList.clear();
+        }
+        
+        // Clear the cards panel
+        if (cardsPanel != null) {
+            cardsPanel.removeAll();
+        }
+    }
+    
+    private void cleanupCard(JPanel card) {
+        // Clean up resources for a single card
+        if (card != null) {
+            Component[] components = card.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JLabel) {
+                    Icon icon = ((JLabel) comp).getIcon();
+                    if (icon instanceof ImageIcon) {
+                        Image img = ((ImageIcon) icon).getImage();
+                        if (img != null) {
+                            img.flush();
+                        }
+                    }
+                    ((JLabel) comp).setIcon(null);
+                }
+            }
+            card.removeAll();
+        }
+    }
+    
+    private void cleanupComponents(Container container) {
+        for (Component comp : container.getComponents()) {
+            // Clean up any image resources
+            if (comp instanceof JLabel) {
+                Icon icon = ((JLabel)comp).getIcon();
+                if (icon instanceof ImageIcon) {
+                    Image image = ((ImageIcon)icon).getImage();
+                    if (image != null) {
+                        image.flush();
+                    }
+                }
+            }
+            // Recursively clean up child components
+            if (comp instanceof Container) {
+                cleanupComponents((Container)comp);
+            }
         }
     }
 }

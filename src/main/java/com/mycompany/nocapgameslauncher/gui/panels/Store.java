@@ -12,15 +12,9 @@ import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CA
 import javax.swing.*;
 
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.*;
-import java.io.*;
 
 import javax.swing.border.EmptyBorder;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
 
@@ -30,6 +24,7 @@ public class Store extends ThemePanel {
     private ArrayList<JPanel> gameCardsList;
     private JLabel titleLabel;
     private static final int CARD_GAP = 20;
+    private static final Map<String, ImageIcon> imageCache = new HashMap<>();
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public Store(mainFrame frame) {
@@ -64,13 +59,14 @@ public class Store extends ThemePanel {
                 for (String title : gameTitles) {
                     String description = "No description available for this game";
                     String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
-                    ImageIcon gameIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
                     
+                    // Create the card with a proxy icon
+                    ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
                     JPanel card = GameCardCreator.createGameCard(
                         title,
                         description,
-                        gameIcon,
-                        () -> frame.showGameDetail(title)
+                        proxyIcon,
+                        () -> frame.showGameDetail(title, description)
                     );
                     
                     // Get the image label from the card
@@ -86,6 +82,7 @@ public class Store extends ThemePanel {
                                     // Update the image label with the actual icon
                                     Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
                                     imageLabel.setIcon(new ImageIcon(scaled));
+                                    imageLabel.repaint();
                                 });
                             }
                         } catch (InterruptedException e) {
@@ -98,39 +95,16 @@ public class Store extends ThemePanel {
                 }
             }
 
-            JScrollPane scrollPane = new JScrollPane(cardsPanel);
+            scrollPane = new JScrollPane(cardsPanel);
             scrollPane.setBorder(BorderFactory.createEmptyBorder());
             scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            scrollPane.setOpaque(false);
-            scrollPane.getViewport().setOpaque(false);
             add(scrollPane, BorderLayout.CENTER);
+            scrollPane.getViewport().setOpaque(false);
             
         } catch (Exception e) {
             System.err.println("Error initializing Store panel: " + e.getMessage());
             e.printStackTrace();
             add(new JLabel("Error loading store content: " + e.getMessage()), BorderLayout.CENTER);
-        }
-    }
-    
-    private void updateGridColumns() {
-        if (cardsPanel == null || gameCardsList.isEmpty()) {
-            return;
-        }
-        
-        int availableWidth = getWidth() - 40; // Subtract left and right padding
-        if (availableWidth <= 0) {
-            return;
-        }
-        
-        // Calculate optimal number of columns based on available width
-        int columns = Math.max(1, availableWidth / (CARD_WIDTH + CARD_GAP));
-        
-        // Update the grid layout if columns changed
-        GridLayout layout = (GridLayout) cardsPanel.getLayout();
-        if (layout.getColumns() != columns) {
-            cardsPanel.setLayout(new GridLayout(0, columns, CARD_GAP, CARD_GAP));
-            cardsPanel.revalidate();
-            cardsPanel.repaint();
         }
     }
 
@@ -141,91 +115,6 @@ public class Store extends ThemePanel {
         String gameURL;
         String gameDescription;
     }
-    
-    private ArrayList<GameData> loadGamesFromFile(String filename) {
-        ArrayList<GameData> games = new ArrayList<>();
-        try (InputStream is = getClass().getResourceAsStream(filename)) {
-            if (is == null) {
-                System.err.println("Could not find resource: " + filename);
-                return games;
-            }
-            
-            // Read the entire file content
-            String content = new String(is.readAllBytes(), "UTF-8");
-            
-            // Parse the JSON array
-            int startArray = content.indexOf('[');
-            int endArray = content.lastIndexOf(']');
-            
-            if (startArray >= 0 && endArray > startArray) {
-                String arrayContent = content.substring(startArray + 1, endArray);
-                
-                // Split by "gameID" to get individual game entries
-                String[] entries = arrayContent.split("(?=\"gameID\")");
-                
-                for (String entry : entries) {
-                    try {
-                        GameData game = new GameData();
-                        
-                        // Extract gameID
-                        int idStart = entry.indexOf("gameID") + 7; // "gameID":
-                        int idEnd = entry.indexOf(',', idStart);
-                        if (idEnd == -1) idEnd = entry.indexOf('}', idStart);
-                        if (idStart > 6 && idEnd > idStart) {
-                            String idStr = entry.substring(idStart, idEnd).trim();
-                            if (idStr.endsWith("}")) {
-                                idStr = idStr.substring(0, idStr.length() - 1);
-                            }
-                            game.gameID = Integer.parseInt(idStr);
-                        }
-                        
-                        // Extract gameName
-                        int nameStart = entry.indexOf("gameName\":\"") + 12;
-                        int nameEnd = entry.indexOf("\"", nameStart);
-                        if (nameStart > 11 && nameEnd > nameStart) {
-                            game.gameName = entry.substring(nameStart, nameEnd);
-                        }
-                        
-                        // Extract imageURL
-                        int imgStart = entry.indexOf("imageURL\":\"") + 12;
-                        int imgEnd = entry.indexOf("\"", imgStart);
-                        if (imgStart > 11 && imgEnd > imgStart) {
-                            game.imageURL = entry.substring(imgStart, imgEnd);
-                            // Remove src/main/resources/ prefix if it exists
-                            if (game.imageURL.startsWith("src/main/resources/")) {
-                                game.imageURL = game.imageURL.substring("src/main/resources/".length());
-                            }
-                        }
-                        
-                        // Extract gameURL
-                        int urlStart = entry.indexOf("gameURL\":\"") + 10;
-                        int urlEnd = entry.indexOf("\"", urlStart);
-                        if (urlStart > 9 && urlEnd > urlStart) {
-                            game.gameURL = entry.substring(urlStart, urlEnd);
-                        }
-                        
-                        // Extract gameDescription
-                        int descStart = entry.indexOf("gameDescription\":\"") + 18;
-                        int descEnd = entry.indexOf("\"", descStart);
-                        if (descStart > 17 && descEnd > descStart) {
-                            game.gameDescription = entry.substring(descStart, descEnd);
-                        }
-                        
-                        if (game.gameName != null) {
-                            games.add(game);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Error parsing game entry: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error loading games from " + filename + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-        return games;
-    }
 
     @Override
     public void updateTheme() {
@@ -235,6 +124,97 @@ public class Store extends ThemePanel {
         }
         if (cardsPanel != null) {
             cardsPanel.updateTheme();
+        }
+    }
+
+    // Panel state management
+    private JScrollPane scrollPane;
+    private boolean isContentCreated = false;
+    
+    public void showPanel() {
+        // Always recreate content to ensure fresh state
+        if (isContentCreated) {
+            removeAll();
+            isContentCreated = false;
+        }
+        
+        if (!isContentCreated) {
+            createContentView();
+            isContentCreated = true;
+        }
+        
+        // Update theme before showing
+        updateTheme();
+        
+        setVisible(true);
+        if (scrollPane != null) {
+            scrollPane.setVisible(true);
+            scrollPane.revalidate();
+        }
+        revalidate();
+        repaint();
+    }
+    
+    public void hidePanel() {
+        // Clean up resources but don't remove components yet
+        cleanupHeavyResources();
+        setVisible(false);
+        if (scrollPane != null) {
+            scrollPane.setVisible(false);
+        }
+    }
+    
+    private void cleanupHeavyResources() {
+        // Clean up any heavy resources like images
+        if (gameCardsList != null) {
+            for (JPanel card : gameCardsList) {
+                cleanupCard(card);
+            }
+            gameCardsList.clear();
+        }
+        
+        // Clear the cards panel
+        if (cardsPanel != null) {
+            cardsPanel.removeAll();
+        }
+    }
+    
+    private void cleanupCard(JPanel card) {
+        // Clean up resources for a single card
+        if (card != null) {
+            Component[] components = card.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JLabel) {
+                    Icon icon = ((JLabel) comp).getIcon();
+                    if (icon instanceof ImageIcon) {
+                        Image img = ((ImageIcon) icon).getImage();
+                        if (img != null) {
+                            img.flush();
+                        }
+                    }
+                    ((JLabel) comp).setIcon(null);
+                }
+                card.removeAll();
+            }
+        }
+    }
+    
+    private void cleanupComponents(Container container) {
+        for (Component comp : container.getComponents()) {
+            // Clean up any image resources
+            if (comp instanceof JLabel) {
+                Icon icon = ((JLabel)comp).getIcon();
+                if (icon instanceof ImageIcon) {
+                    Image image = ((ImageIcon)icon).getImage();
+                    if (image != null) {
+                        image.flush();
+                    }
+                }
+            }
+            // Recursively clean up child components
+            if (comp instanceof Container) {
+                cleanupComponents((Container)comp);
+            }
         }
     }
 }
