@@ -1,9 +1,1 @@
-{
-  "userID": 5,
-  "username": "Test",
-  "password": "test123",
-  "ownedGameIds": [
-    1,
-    6
-  ]
-}
+{"ownedGameIds":[1,6],"userID":5.0,"username":"Test","password":"test123"}

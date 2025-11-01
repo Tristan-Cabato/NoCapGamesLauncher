@@ -2,14 +2,14 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.gui.userManager.UserGameData;
+import com.mycompany.nocapgameslauncher.gui.userManager.UserGameManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
 import javax.swing.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.Graphics2D;
-import java.awt.AlphaComposite;
 import java.util.*;
 import java.io.*;
 import javax.swing.border.EmptyBorder;
@@ -21,6 +21,7 @@ public class GameDetail extends ThemePanel {
     private final JTextArea gameDescriptionArea;
     private final JScrollPane descriptionScrollPane;
     private final ThemeButton playButton;
+    private final ThemeButton removeButton;
     private final JLabel gameImageLabel;
     private boolean userOwned;
     private static final ImageIcon DEFAULT_GAME_ICON;
@@ -99,12 +100,8 @@ public class GameDetail extends ThemePanel {
         // Button panel at the bottom
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
         buttonPanel.setOpaque(false);
-        
-        if (userOwned) {
-            playButton = new ThemeButton("Play Game", false, false, null, true);
-        } else {
-            playButton = new ThemeButton("Add to Library", false, false, null, true);
-        }
+
+        playButton = new ThemeButton("Play Games", false, false, null, true);
 
         FontManager.setFont(playButton, Font.BOLD, 20);
         playButton.setPreferredSize(new Dimension(200, 50));
@@ -114,110 +111,63 @@ public class GameDetail extends ThemePanel {
         playButton.setBorderPainted(false);
         
         buttonPanel.add(playButton);
+
+        // Remove button
+        removeButton = new ThemeButton("Remove from Library", false, false, null, true);
+        FontManager.setFont(removeButton, Font.BOLD, 16);
+        removeButton.setBackground(Color.RED);
+        removeButton.setForeground(Color.WHITE);
+        removeButton.setOpaque(true);
+        removeButton.setBorderPainted(false);
+        removeButton.addActionListener(_ -> removeFromLibrary());
+        removeButton.setVisible(false); // Initially hidden
+        buttonPanel.add(removeButton);
         
         // Add everything to main panel
         add(contentPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        playButton.addActionListener(_ -> {
-            String gameTitle = gameTitleLabel.getText();
-            String gamePath = resourceLoader.RESOURCE_DIRECTORY + "Executables/" + 
-                            gameTitle + ".lnk";
-            
-            try {
-                File file = new File(gamePath);
-                if (file.exists()) {
-                    Desktop.getDesktop().open(file);
-                    JOptionPane optionPane = new JOptionPane(
-                    "Launching " + gameTitle + "...", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                    JDialog dialog = optionPane.createDialog("Game Launched");
-                    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-                    dialog.setModal(false);
-                    dialog.setVisible(true);
+        if (userOwned) {
+            playButton.addActionListener(_ -> {
+                String gameTitle = gameTitleLabel.getText();
+                String gamePath = resourceLoader.RESOURCE_DIRECTORY + "Executables/" + 
+                                gameTitle + ".lnk";
+                
+                try {
+                    File file = new File(gamePath);
+                    if (file.exists()) {
+                        Desktop.getDesktop().open(file);
+                        JOptionPane optionPane = new JOptionPane(
+                        "Launching " + gameTitle + "...", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                        JDialog dialog = optionPane.createDialog("Game Launched");
+                        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                        dialog.setModal(false);
+                        dialog.setVisible(true);
 
-                    javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
-                        dialog.dispose();
-                    });
-                    timer.setRepeats(false);
-                    timer.start();
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "Executable not found at: " + gamePath, 
-                        "Error", 
-                        JOptionPane.ERROR_MESSAGE);
+                        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
+                            dialog.dispose();
+                        });
+                        timer.setRepeats(false);
+                        timer.start();
+                    } else {
+                        JOptionPane.showMessageDialog(this, 
+                            "Executable not found at: " + gamePath, 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, "Error launching game: " + e.getMessage());
                 }
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error launching game: " + e.getMessage());
-            }
-        });
+            });
+        } else {
+            playButton.addActionListener(_ -> {
+                addToLibrary();            
+            });
+        }
 
         gameDescriptions = loadGameDescriptions();
-    }
-
-    private void checkIfOwned() {
-        System.out.println("=== Starting checkIfOwned() ===");
-        System.out.println("Current game ID: " + currentGameId);
-        
-        try {
-            String currentUser = com.mycompany.nocapgameslauncher.database.DatabaseHandler.getCurrentUser();
-            System.out.println("Current user: " + currentUser);
-            
-            if (currentUser == null || currentUser.trim().isEmpty()) {
-                System.out.println("No current user found, cannot check ownership");
-                userOwned = false;
-                return;
-            }
-            
-            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";
-            System.out.println("Looking for user file at: " + userJsonPath);
-            
-            File userFile = new File(userJsonPath);
-            
-            if (!userFile.exists()) {
-                System.out.println("User JSON file not found: " + userJsonPath);
-                userOwned = false;
-                return;
-            }
-            
-            try (java.io.Reader reader = new java.io.FileReader(userFile)) {
-                com.google.gson.Gson gson = new com.google.gson.Gson();
-                java.util.Map<String, Object> userData = gson.fromJson(reader, java.util.Map.class);
-                
-                if (userData == null) {
-                    System.out.println("Failed to parse user data from JSON");
-                    userOwned = false;
-                    return;
-                }
-                
-                // Get owned game IDs
-                @SuppressWarnings("unchecked")
-                java.util.List<Double> ownedGameIds = (java.util.List<Double>) userData.get("ownedGameIds");
-                
-                // Check if current game ID is in the owned games list
-                if (ownedGameIds != null) {
-                    System.out.println("User's owned game IDs: " + ownedGameIds);
-                    userOwned = ownedGameIds.stream()
-                            .anyMatch(id -> {
-                                boolean match = (id != null && id.intValue() == currentGameId);
-                                System.out.println("Checking if " + id + " == " + currentGameId + ": " + match);
-                                return match;
-                            });
-                    System.out.println("Final ownership for game " + currentGameId + ": " + userOwned);
-                } else {
-                    System.out.println("No owned games found for user");
-                    userOwned = false;
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error checking if game is owned: " + e.getMessage());
-            userOwned = false;
-        }
-        
-        // Update button text based on ownership
-        if (playButton != null) {
-            playButton.setText(userOwned ? "Play Game" : "Add to Library");
-        }
+        updateButtonStates();
     }
     
     public void setGame(String gameTitle) {
@@ -339,6 +289,76 @@ public class GameDetail extends ThemePanel {
             System.err.println("Error parsing game data: " + e.getMessage());
         }
         return descriptions;
+    }
+
+    private void addToLibrary() {
+        try {
+            UserGameData userGameData = UserGameData.loadForUser(
+                com.mycompany.nocapgameslauncher.database.DatabaseHandler.getCurrentUser()
+            );
+            userGameData.addGame(currentGameId);
+            userOwned = true;
+            updateButtonStates();
+            JOptionPane.showMessageDialog(this, 
+                "Game added to your library!", 
+                "Success", 
+                JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (Exception e) {
+            System.err.println("Error adding game to library: " + e.getMessage());
+            JOptionPane.showMessageDialog(
+                this,
+                "Failed to add game to library: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void removeFromLibrary() {
+        try {
+            UserGameData userGameData = UserGameData.loadForUser(
+                com.mycompany.nocapgameslauncher.database.DatabaseHandler.getCurrentUser()
+            );
+            userGameData.removeGame(currentGameId);
+            userOwned = false;
+            updateButtonStates();
+            JOptionPane.showMessageDialog(
+                this,
+                "Game removed from your library!",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (Exception e) {
+            System.err.println("Error removing game from library: " + e.getMessage());
+            JOptionPane.showMessageDialog(
+                this,
+                "Failed to remove game from library: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void checkIfOwned() {
+        try {
+            UserGameData userGameData = UserGameData.loadForUser(
+                com.mycompany.nocapgameslauncher.database.DatabaseHandler.getCurrentUser()
+            );
+            userOwned = userGameData.ownsGame(currentGameId);
+        } catch (Exception e) {
+            System.err.println("Error checking game ownership: " + e.getMessage());
+            userOwned = false;
+        }
+        updateButtonStates();
+    }
+
+    private void updateButtonStates() {
+        if (playButton != null) playButton.setText(userOwned ? "Play Game" : "Add to Library");
+        if (removeButton != null) {
+            if (userOwned) removeButton.setVisible(true);
+            else removeButton.setVisible(false);
+        }
     }
 
     @Override
