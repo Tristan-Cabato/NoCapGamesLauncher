@@ -3,16 +3,30 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
+import com.mycompany.nocapgameslauncher.gui.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.gui.userManager.UserMemento;
 
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
+import java.util.Arrays;
 import java.io.*;
-import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
+import com.mycompany.nocapgameslauncher.gui.userManager.UserMemento;
 
 public class LoginForm extends JPanel {
+    // Form fields
+    public boolean userRemembered;
+
+    private JTextField userField;
+    private JPasswordField passField;
+    private JPasswordField regPassField;
+    private JPasswordField regConfirmPassField;
+    private JLabel errorLabel;
+    private JLabel successLabel;
+    private JCheckBox rememberMe;
+    private final UserMemento savedSession;
 
     private CardLayout cardLayout;
     private JPanel cardPanel;
@@ -36,10 +50,39 @@ public class LoginForm extends JPanel {
         }
     }
 
-    public LoginForm(JFrame owner) {
+    public LoginForm(UserMemento savedSession) {
         super(new BorderLayout());
+        this.savedSession = savedSession;
+        
+        // Set theme based on saved session or default to dark mode
+        boolean shouldBeDark = true; // Default to dark mode
+        if (savedSession != null && savedSession.getThemeState() != null) {
+            shouldBeDark = "DARK".equals(savedSession.getThemeState());
+        }
+        
+        boolean currentlyDark = !LightModeToggle.isLightMode();
+        
+        // Only toggle if current state doesn't match desired state
+        if (shouldBeDark != currentlyDark) {
+            LightModeToggle.toggle();
+        }
+        
         setBackground(LightModeToggle.getBackgroundColor());
         initializeUI();
+    }
+
+    public void initAutoLogin() {
+        if (savedSession != null && savedSession.shouldRememberMe()) {
+            // Use invokeLater to ensure the window is fully initialized
+            SwingUtilities.invokeLater(() -> {
+                // Only auto-login if we have valid credentials
+                if (savedSession.getUsername() != null && !savedSession.getUsername().isEmpty() && 
+                    savedSession.getPassword() != null && savedSession.getPassword().length > 0) {
+                    handleLogin(savedSession.getUsername(), new String(savedSession.getPassword()));
+                }
+            });
+            userRemembered = true;
+        }
     }
 
     private void initializeUI() {
@@ -198,7 +241,7 @@ public class LoginForm extends JPanel {
     private JPanel createModernLoginPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -207,21 +250,62 @@ public class LoginForm extends JPanel {
         gbc.insets = new Insets(0, 0, 10, 0); // Reduced from 15 to 10
         
         // Username field
-        JTextField userField = createModernTextField("Username");
+        userField = createModernTextField("Username");
         gbc.gridy = 0;
         panel.add(createFieldGroup("USERNAME", userField), gbc);
         
         // Password field
-        JPasswordField passField = createModernPasswordField("Password");
+        passField = createModernPasswordField("Password");
         gbc.gridy = 1;
         panel.add(createFieldGroup("PASSWORD", passField), gbc);
+        
+        // Remember me checkbox
+        rememberMe = new JCheckBox("Remember me");
+        
+        // Pre-check if we have a saved session with remember me enabled
+        if (savedSession != null && savedSession.shouldRememberMe()) {
+            rememberMe.setSelected(true);
+        }
+        
+        rememberMe.setOpaque(false);
+        rememberMe.setFocusPainted(false);
+        rememberMe.setHorizontalAlignment(SwingConstants.LEFT);
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 15, 0); // Reduced from 25 to 15
+        panel.add(rememberMe, gbc);
         
         // Login button
         RoundedButton loginBtn = new RoundedButton("LOGIN", LightModeToggle.getAccentColor());
         loginBtn.addActionListener(e -> {
             if (e != null) {
                 String username = userField.getText().trim();
-                String password = new String(passField.getPassword());
+                char[] passwordChars = passField.getPassword();
+                String password = new String(passwordChars);
+
+                // Get the last panel from saved session or default to LIBRARY
+                String lastPanel = (savedSession != null && savedSession.getLastPanel() != null && !savedSession.getLastPanel().isEmpty()) 
+                    ? savedSession.getLastPanel() : "LIBRARY";
+
+                // Create or update the session memento
+                UserMemento memento = new UserMemento(
+                    username,
+                    passwordChars,
+                    lastPanel,
+                    LightModeToggle.isLightMode() ? "LIGHT" : "DARK"
+                );
+                memento.setRememberMe(rememberMe.isSelected());
+                
+                // Clear the password array for security
+                Arrays.fill(passwordChars, ' ');
+                
+                // Update the current memento in SessionIterator
+                SessionIterator.setCurrentMemento(memento);
+                
+                // If remember me is not checked, clear the session
+                if (!rememberMe.isSelected()) {
+                    SessionIterator.clearCurrentSession();
+                }
+                
                 handleLogin(username, password);
             }
         });
@@ -410,7 +494,7 @@ public class LoginForm extends JPanel {
     }
 
     private void handleLogin(String username, String password) {
-        if (username.isEmpty() || password.isEmpty()) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             showModernError("Please enter both username and password");
             return;
         }
@@ -418,26 +502,45 @@ public class LoginForm extends JPanel {
         try {
             boolean ok = DatabaseHandler.login(username, password);
             if (ok) {
-                // Set the current user in DatabaseHandler
-                DatabaseHandler.setCurrentUser(username);
-                SwingUtilities.getWindowAncestor(this).dispose();
+                // Get the last panel from saved session or default to LIBRARY
+                String lastPanel = (savedSession != null && savedSession.getLastPanel() != null) 
+                    ? savedSession.getLastPanel() : "LIBRARY";
                 
+                // Update the memento with the current state
+                UserMemento memento = new UserMemento(
+                    username,
+                    password.toCharArray(),
+                    lastPanel,
+                    LightModeToggle.isLightMode() ? "LIGHT" : "DARK"
+                );
+                memento.setRememberMe(rememberMe != null && rememberMe.isSelected());
+                SessionIterator.setCurrentMemento(memento);
+                
+                // Set the current user
+                DatabaseHandler.setCurrentUser(username);
+                
+                // Close the login window if it exists
+                Window window = SwingUtilities.getWindowAncestor(this);
+                if (window != null) {
+                    window.dispose();
+                }
+                
+                // Open the appropriate window
                 if (username.equals("Admin")) {
-                    // Admin login - show database management window
                     databaseMegaquery megaquery = new databaseMegaquery();
                     megaquery.setVisible(true);
                 } else {
-                    // Regular user login - create and show main frame
+                    String finalLastPanel = lastPanel;
                     SwingUtilities.invokeLater(() -> {
                         com.mycompany.nocapgameslauncher.gui.mainFrame frame = 
-                            new com.mycompany.nocapgameslauncher.gui.mainFrame();
+                            new com.mycompany.nocapgameslauncher.gui.mainFrame(finalLastPanel);
                         frame.setVisible(true);
                     });
                 }
             } else {
                 showModernError("Invalid username or password");
             }
-        } catch (SQLException |IOException ex) {
+        } catch (SQLException | IOException ex) {
             showModernError("Database connection error:\n" + ex.getMessage());
         }
     }

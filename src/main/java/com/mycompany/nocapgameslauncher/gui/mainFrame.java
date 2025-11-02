@@ -4,6 +4,7 @@ import com.mycompany.nocapgameslauncher.gui.components.sidebarCreator;
 import com.mycompany.nocapgameslauncher.gui.components.HeaderCreator;
 import com.mycompany.nocapgameslauncher.gui.panels.*;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemeManager;
+import com.mycompany.nocapgameslauncher.gui.userManager.SessionIterator;
 import javax.swing.*;
 import java.awt.*;
 
@@ -20,6 +21,7 @@ public class mainFrame extends JFrame {
     private Profile profilePanel;
     
     private JPanel currentPanel;
+    private String currentPanelName = "LIBRARY";
 
     public Library getLibraryPanel() {
         return libraryPanel;
@@ -29,6 +31,16 @@ public class mainFrame extends JFrame {
         initializeFrame();
         setupUI();
         ThemeManager.updateTheme(); // Apply initial theme
+    }
+    
+    public mainFrame(String startPanel) {
+        initializeFrame();
+        setupUI();
+        ThemeManager.updateTheme(); // Apply initial theme
+        // Navigate to the saved panel
+        if (startPanel != null && !startPanel.isEmpty() && !startPanel.equals("LOGIN")) {
+            showCard(startPanel);
+        }
     }
 
     private void initializeFrame() {
@@ -93,6 +105,10 @@ public class mainFrame extends JFrame {
                 }
                 storePanel.showPanel();
                 currentPanel = storePanel;
+            } case "FRIENDS" -> {
+                currentPanel = friendsPanel;
+            } case "PROFILE" -> {
+                currentPanel = profilePanel;
             } case "GAME_DETAIL" -> {
                 if (gameDetailPanel.getParent() == null) {
                     mainPanel.add(gameDetailPanel, "GAME_DETAIL");
@@ -105,7 +121,19 @@ public class mainFrame extends JFrame {
             } default -> { return; }
         }
         
+        // Update the current panel name and save to session
+        currentPanelName = cardName;
+        updateSessionPanel(cardName);
+        
         cardLayout.show(mainPanel, cardName);
+    }
+    
+    private void updateSessionPanel(String panelName) {
+        // Update the session's last panel
+        var currentMemento = SessionIterator.getCurrentMemento();
+        if (currentMemento != null) {
+            currentMemento.setLastPanel(panelName);
+        }
     }
 
     public void showGameDetail(String gameTitle) {

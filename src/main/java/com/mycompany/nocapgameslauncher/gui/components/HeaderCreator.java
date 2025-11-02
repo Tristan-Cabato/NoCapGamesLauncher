@@ -2,13 +2,12 @@ package com.mycompany.nocapgameslauncher.gui.components;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
+import com.mycompany.nocapgameslauncher.gui.userManager.SessionIterator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
 
@@ -122,6 +121,12 @@ public class HeaderCreator {
             themeToggleButton.setText(LightModeToggle.isLightMode() ? LightModeToggle.DARK_ICON : LightModeToggle.LIGHT_ICON);
             LightModeToggle.toggle();
             ThemeManager.updateTheme();
+            
+            // Update the session memento with the new theme state
+            var currentMemento = SessionIterator.getCurrentMemento();
+            if (currentMemento != null) {
+                currentMemento.setThemeState(LightModeToggle.isLightMode() ? "LIGHT" : "DARK");
+            }
         });
         profilePanel.add(themeToggleButton);
         
@@ -136,12 +141,11 @@ public class HeaderCreator {
             JMenuItem logoutItem = new JMenuItem("Logout");
             logoutItem.setForeground(LightModeToggle.getTextColor());
             logoutItem.setBackground(LightModeToggle.getComponentColor());
-            logoutItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    frame.dispose();
-                    NoCapGamesLauncher.main(null);
-                }
+            logoutItem.addActionListener(e -> {
+                // Clear the session on logout
+                SessionIterator.clearCurrentSession();
+                frame.dispose();
+                NoCapGamesLauncher.main(null);
             });
             profileMenu.add(logoutItem);
 
