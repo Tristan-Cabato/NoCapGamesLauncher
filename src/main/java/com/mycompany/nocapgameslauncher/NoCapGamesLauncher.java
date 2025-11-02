@@ -11,13 +11,10 @@ public class NoCapGamesLauncher {
     public static void main(String[] args) {
         // Initialize database and load any saved session
         DatabaseHandler.getInstance().initializeDatabase();
-        
-        // Load saved session if exists
         UserMemento savedSession = SessionIterator.getCurrentMemento();
         
         SwingUtilities.invokeLater(() -> {
-            JFrame loginFrame = new JFrame("No Cap Games - " + 
-                (savedSession != null ? "Welcome Back!" : "Login"));
+            JFrame loginFrame = new JFrame("No Cap Games - Login");
             loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             LoginForm loginForm = new LoginForm(savedSession);
             

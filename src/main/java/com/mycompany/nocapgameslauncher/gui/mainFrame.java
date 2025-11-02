@@ -87,8 +87,14 @@ public class mainFrame extends JFrame {
                 ((Library) currentPanel).hidePanel();
             } else if (currentPanel instanceof Store) {
                 ((Store) currentPanel).hidePanel();
+            } else if (currentPanel instanceof Friends) {
+                ((Friends) currentPanel).setVisible(false);
             } else if (currentPanel == gameDetailPanel) {
                 gameDetailPanel.setVisible(false);
+            } else if (currentPanel == searchPanel) {
+                searchPanel.setVisible(false);
+            } else if (currentPanel == profilePanel) {
+                profilePanel.setVisible(false);
             }
         }
         
@@ -106,8 +112,10 @@ public class mainFrame extends JFrame {
                 storePanel.showPanel();
                 currentPanel = storePanel;
             } case "FRIENDS" -> {
+                friendsPanel.setVisible(true);
                 currentPanel = friendsPanel;
             } case "PROFILE" -> {
+                profilePanel.setVisible(true);
                 currentPanel = profilePanel;
             } case "GAME_DETAIL" -> {
                 if (gameDetailPanel.getParent() == null) {

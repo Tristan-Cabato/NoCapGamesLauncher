@@ -1,6 +1,7 @@
 package com.mycompany.nocapgameslauncher.userManager;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import java.io.File;
 import java.io.FileReader;
@@ -19,7 +20,7 @@ public class UserGameData {
     private int userID;
     private String username;
     private String password;
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     public UserGameData() {
         this.ownedGameIds = new ArrayList<>();

@@ -16,7 +16,7 @@ import com.mycompany.nocapgameslauncher.userManager.UserRepository;
 public class DatabaseHandler {
     private static DatabaseHandler instance;
     private static String currentUser;
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/nocapserver";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/nocapserver?allowPublicKeyRetrieval=true&useSSL=false";
     public final String DB_USER = "Admin";
     private static final String DB_PASS = "nocap";
     
@@ -61,6 +61,7 @@ public class DatabaseHandler {
         }
         return -1; // User not found
     }
+    
 
     // Login Management
     public boolean login(String username, String password) throws SQLException, IOException {
@@ -110,27 +111,51 @@ public class DatabaseHandler {
         }
     }
 
-    public void initializeDatabase() {
-        String[] initQueries = {
-            "CREATE DATABASE IF NOT EXISTS nocapserver",
-            "USE nocapserver",
-            "CREATE TABLE IF NOT EXISTS users (" +
+   public void initializeDatabase() {
+        // First try to connect to the database
+        try (Connection conn = getConnection()) {
+            // If we get here, the database exists
+            System.out.println("Connected to existing database");
+            initializeTables(conn);
+        } catch (SQLException e) {
+            // If database doesn't exist, create it
+            if (e.getMessage().contains("Unknown database")) {
+                try (Connection rootConn = DriverManager.getConnection(
+                        "jdbc:mysql://localhost:3306/?allowPublicKeyRetrieval=true&useSSL=false", 
+                        DB_USER, 
+                        DB_PASS);
+                    Statement stmt = rootConn.createStatement()) {
+                    
+                    // Create the database
+                    stmt.execute("CREATE DATABASE nocapserver");
+                    System.out.println("Created database nocapserver");
+                    
+                    // Now connect to the new database and create tables
+                    try (Connection newDbConn = getConnection()) {
+                        initializeTables(newDbConn);
+                    }
+                } catch (SQLException ex) {
+                    System.err.println("Error creating database: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            } else {
+                System.err.println("Database error: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void initializeTables(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS users (" +
                 "userID INT AUTO_INCREMENT PRIMARY KEY, " +
                 "username VARCHAR(50) UNIQUE NOT NULL, " +
                 "password VARCHAR(255) NOT NULL" +
-            ")",
-            "INSERT IGNORE INTO users (username, password) VALUES ('Admin', 'nocap')"
-        };
-
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
+            ")");
             
-            for (String query : initQueries) {
-                stmt.execute(query);
-            }
-            System.out.println("Database initialized successfully");
-        } catch (SQLException e) {
-            System.err.println("Error initializing database: " + e.getMessage());
+            // Insert default admin user if it doesn't exist
+            stmt.executeUpdate("INSERT IGNORE INTO users (username, password) VALUES ('Admin', 'nocap')");
+            System.out.println("Database tables initialized successfully");
         }
     }
 

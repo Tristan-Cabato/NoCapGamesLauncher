@@ -1,37 +1,28 @@
 package com.mycompany.nocapgameslauncher.gui.panels;
 
-import com.mycompany.nocapgameslauncher.gui.mainFrame;
+import com.mycompany.nocapgameslauncher.game_manager.Game;
+import com.mycompany.nocapgameslauncher.game_manager.GameManager;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
-import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
-import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
+import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
-import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CARD_WIDTH;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.json.*;
+import static com.mycompany.nocapgameslauncher.gui.components.GameCardCreator.CARD_WIDTH;
 
 public class Search extends ThemePanel {
     private final mainFrame frame;
     private ThemePanel cardsPanel;
     private ArrayList<JPanel> gameCardsList;
-    private ArrayList<String> allGameTitles;
-    private ArrayList<String> allGameDescriptions;
+    private List<Game> allGames;
     private JLabel titleLabel;
     private JLabel resultsLabel;
     private static final int CARD_GAP = 20;
@@ -47,71 +38,8 @@ public class Search extends ThemePanel {
     }
 
     private void loadAllGames() {
-        allGameTitles = new ArrayList<>();
-        allGameDescriptions = new ArrayList<>();
-        
-        // Load from library
-        ArrayList<String> libraryTitles = resourceLoader.loadGamesFromFile("/library_games.txt");
-        ArrayList<String> libraryDescriptions = resourceLoader.loadGameDescriptionsFromFile("/gamedesc.txt");
-        
-        allGameTitles.addAll(libraryTitles);
-        for (int i = 0; i < libraryTitles.size(); i++) {
-            if (i < libraryDescriptions.size()) {
-                allGameDescriptions.add(libraryDescriptions.get(i));
-            } else {
-                allGameDescriptions.add("");
-            }
-        }
-        
-        // Load from store
-        ArrayList<String> storeTitles = NameFormatting.getGameTitlesFromJson();
-        for (String title : storeTitles) {
-            if (!allGameTitles.contains(title)) {
-                allGameTitles.add(title);
-                allGameDescriptions.add("");
-            }
-        }
-    }
-    
-    private ArrayList<String> getLibraryTitles() {
-        ArrayList<String> titles = new ArrayList<>();
-        File gamesFile = new File("user_data/store_games.json");
-        if (gamesFile.exists()) {
-            try {
-                // Read the JSON file
-                String json = new String(Files.readAllBytes(gamesFile.toPath()));
-                // Parse the JSON array
-                JSONArray games = new JSONArray(json);
-                
-                // Extract game titles
-                for (int i = 0; i < games.length(); i++) {
-                    JSONObject game = games.getJSONObject(i);
-                    titles.add(game.getString("gameName"));
-                }
-            } catch (IOException | JSONException e) {
-                System.out.println("Error loading library titles: " + e.getMessage() + "\n");
-            }
-        }
-        return titles;
-    }
-    
-    private ArrayList<String> getStoreTitles() {
-        ArrayList<String> titles = new ArrayList<>();
-        try (InputStream is = getClass().getResourceAsStream("/store_games.json");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            
-            String json = reader.lines().collect(Collectors.joining());
-            JSONArray gamesArray = new JSONArray(json);
-            
-            for (int i = 0; i < gamesArray.length(); i++) {
-                JSONObject game = gamesArray.getJSONObject(i);
-                String gameName = game.getString("gameName");
-                titles.add(gameName);
-            }
-        } catch (Exception e) {
-            System.err.println("Error reading store_games.json: " + e.getMessage());
-        }
-        return titles;
+        GameManager gameManager = GameManager.getInstance();
+        allGames = gameManager.getAllGames();
     }
 
     private void createContentView() {
@@ -161,7 +89,6 @@ public class Search extends ThemePanel {
         }
     }
     
-    @SuppressWarnings("BusyWait") // Placeholder suppression for now
     public void performSearch(String query, String scope) {
         currentQuery = query.trim().toLowerCase();
         
@@ -176,91 +103,73 @@ public class Search extends ThemePanel {
             return;
         }
         
-        // Determine which games to search based on scope
-        ArrayList<String> searchTitles = new ArrayList<>();
-        ArrayList<String> searchDescriptions = new ArrayList<>();
+        // Filter games based on search query and scope
+        List<Game> matchingGames = allGames.stream()
+            .filter(game -> game.getTitle().toLowerCase().contains(currentQuery) || 
+                          game.getDescription().toLowerCase().contains(currentQuery))
+            .toList();
         
-        switch (scope) {
-            case "LIBRARY" -> {
-            ArrayList<String> libraryTitles = getLibraryTitles();
-            ArrayList<String> libraryDescriptions = resourceLoader.loadGameDescriptionsFromFile("/gamedesc.txt");
-            searchTitles.addAll(libraryTitles);
-            for (int i = 0; i < libraryTitles.size(); i++) {
-                if (i < libraryDescriptions.size()) {
-                    searchDescriptions.add(libraryDescriptions.get(i));
-                } else {
-                    searchDescriptions.add("");
-                }
-            } titleLabel.setText("Library Search Results");
-            } case "STORE" -> {
-                searchTitles.addAll(getStoreTitles());
-                for (String _ : searchTitles) {
-                    searchDescriptions.add("");
-                }
-                titleLabel.setText("Store Search Results");
-            } default -> {
-                searchTitles.addAll(allGameTitles);
-                searchDescriptions.addAll(allGameDescriptions);
-                titleLabel.setText("Search Results");
-            }
-        }
-        // Search for matching games
-        int matchCount = 0;
-        for (int i = 0; i < searchTitles.size(); i++) {
-            String title = searchTitles.get(i);
-            String description = i < searchDescriptions.size() ? searchDescriptions.get(i) : "";
-            
-            // Check if title or description contains the search query
-            if (title.toLowerCase().contains(currentQuery) || 
-                description.toLowerCase().contains(currentQuery)) {
-                    String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
-                    // Load proxy image immediately
-                    ImageIcon gameIcon = resourceLoader.loadIcon(resourceLoader.PROXYIMAGE);
-                    
-                    // Create the card with the proxy image first
-                    JPanel card = GameCardCreator.createGameCard(title, description, gameIcon, -1, () -> frame.showGameDetail(title));
-                    
-                    // Store a reference to the card's image label
-                    JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
-                    
-                    // Load actual image in background
-                    new Thread(() -> {
-                        try {
-                            Thread.sleep(1200); // 1.2 seconds | Simulate loading
-                            ImageIcon actualIcon = resourceLoader.loadIcon(iconPath);
-                            if (actualIcon != null) {
-                                SwingUtilities.invokeLater(() -> {
-                                    // Update the image label with the actual icon
-                                    Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
-                                    imageLabel.setIcon(new ImageIcon(scaled));
-                                });
-                            }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }, "ImageLoader-" + title).start();
-                    
-                    gameCardsList.add(card);
-                    cardsPanel.add(card);
-                    matchCount++;
-            }
-        }
-        
-        // Update results label
-        String scopeText = scope.equals("LIBRARY") ? " in Library" : (scope.equals("STORE") ? " in Store" : "");
-        if (matchCount == 0) {
-            resultsLabel.setText("No games found for \"" + query + "\"" + scopeText);
-            JLabel noResultsLabel = new JLabel("Try a different search term");
-            FontManager.setFont(noResultsLabel, Font.PLAIN, 18);
-            noResultsLabel.setForeground(LightModeToggle.getTextColor());
-            cardsPanel.add(noResultsLabel);
+        // Update UI based on search results
+        if (matchingGames.isEmpty()) {
+            resultsLabel.setText("No games found matching '" + query + "'");
         } else {
-            resultsLabel.setText("Found " + matchCount + " game" + (matchCount != 1 ? "s" : "") + " for \"" + query + "\"" + scopeText);
+            resultsLabel.setText("Found " + matchingGames.size() + " games matching '" + query + "'");
+            
+            // Create and add game cards for matching games
+            for (Game game : matchingGames) {
+                ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
+                JPanel card = GameCardCreator.createGameCard(
+                    game.getTitle(),
+                    game.getDescription(),
+                    proxyIcon,
+                    game.getID(),
+                    () -> frame.showGameDetail(game.getTitle(), game.getID())
+                );
+                
+                // Add card to the panel
+                gameCardsList.add(card);
+                cardsPanel.add(card);
+                
+                // Load actual image in background
+                loadGameImageAsync(game, card);
+            }
         }
         
-        updateGridColumns();
+        // Update the UI
         cardsPanel.revalidate();
         cardsPanel.repaint();
+    }
+    
+    private void loadGameImageAsync(Game game, JPanel card) {
+        new Thread(() -> {
+            try {
+                // Simulate loading
+                Thread.sleep(500);
+                
+                // Load actual image
+                ImageIcon actualIcon = resourceLoader.loadIcon(game.getImageUrl());
+                if (actualIcon != null) {
+                    // Find and update the image label in the card
+                    Component[] components = card.getComponents();
+                    for (Component comp : components) {
+                        if (comp instanceof JLabel label) {
+                            if (label.getIcon() != null) {
+                                // This is the image label
+                                SwingUtilities.invokeLater(() -> {
+                                    Image scaled = actualIcon.getImage().getScaledInstance(
+                                        180, 180, Image.SCALE_SMOOTH);
+                                    label.setIcon(new ImageIcon(scaled));
+                                    label.repaint();
+                                });
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading game image: " + e.getMessage());
+            }
+        }, "ImageLoader-" + game.getTitle()).start();
     }
     
     private void updateGridColumns() {

@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -73,7 +75,7 @@ public class databaseMegaquery extends JFrame {
         
         // Add other buttons (scan, clear) if needed
         JButton scanButton = new JButton("Scan Games");
-        scanButton.addActionListener(_ -> scanAndProcessGames());
+        scanButton.addActionListener(_ -> scanGames());
         buttonPanel.add(scanButton);
 
         JButton createButton = new JButton("Save to File");
@@ -98,110 +100,143 @@ public class databaseMegaquery extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
     }
     
-    private void scanAndProcessGames() {
+   private void scanGames() {
         logArea.append("Starting game scan...\n");
         
         File execDir = new File("src/main/resources/Executables");
         if (!execDir.exists() || !execDir.isDirectory()) {
-            logArea.append("Error: Executables directory not found at " + execDir.getAbsolutePath() + "\n");
+            logArea.append("Executables directory not found.\n");
             return;
         }
-        
-        File[] lnkFiles = execDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".lnk"));
-        if (lnkFiles == null || lnkFiles.length == 0) {
-            logArea.append("No .lnk files found in Executables directory.\n");
+
+        File[] files = execDir.listFiles((dir, name) -> name.endsWith(".lnk"));
+        if (files == null || files.length == 0) {
+            logArea.append("No game files found in Executables directory.\n");
             return;
         }
-        
-        gamesArray = new JSONArray(); // Reset the array for new scan
-        
-        try (Connection conn = database.getConnection()) {
-            String clearQuery = "TRUNCATE TABLE gameData";
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(clearQuery);
-                logArea.append("Rebooting table\n");
-            }
-            
-            String insertQuery = "INSERT INTO gameData (gameName, gameURL, imageURL, gameDescription) VALUES (?, ?, ?, ?)";
-            
-            for (File file : lnkFiles) {
-                try {
-                    String fileName = file.getName();
-                    String gameName = fileName.substring(0, fileName.lastIndexOf('.')).replace(" ", "_").toLowerCase();
-                    String gamePath = file.getAbsolutePath();
-                    String gameIconPath = "src/main/resources/ImageResources/" + fileName.toLowerCase().replace(".lnk", ".jpg");
-                    String gameDescription = "This is a description";
+
+        processedCount = 0;
+        for (File file : files) {
+            try {
+                String fileName = file.getName();
+                String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+                String gameName = baseName.replace(" ", "_").toLowerCase();
+                String gamePath = file.getAbsolutePath();
+                String gameIconPath = "src/main/resources/ImageResources/" + baseName.toLowerCase() + ".jpg";
+                String gameDescription = "This is a description";
+
+                // Insert into database
+                String sql = "INSERT INTO gameData (gameName, gameURL, imageURL, gameDescription) VALUES (?, ?, ?, ?)";
+                try (Connection conn = database.getConnection();
+                    PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                     
-                    // Insert into database
-                    try (PreparedStatement pstmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                        pstmt.setString(1, gameName);
-                        pstmt.setString(2, gamePath);
-                        pstmt.setString(3, gameIconPath);
-                        pstmt.setString(4, gameDescription);
-                        
-                        int affectedRows = pstmt.executeUpdate();
-                        
-                        if (affectedRows > 0) {
-                            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                                if (generatedKeys.next()) {
-                                    int generatedId = generatedKeys.getInt(1);
-                                    createGameMetadata(generatedId, gameName, gamePath, gameIconPath, gameDescription);
-                                    logArea.append("Processed: " + fileName + " -> " + gameName + "\n");
-                                    processedCount++;
-                                }
+                    pstmt.setString(1, gameName);
+                    pstmt.setString(2, gamePath);
+                    pstmt.setString(3, gameIconPath);
+                    pstmt.setString(4, gameDescription);
+                    
+                    int affectedRows = pstmt.executeUpdate();
+                    
+                    if (affectedRows > 0) {
+                        try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                int generatedId = generatedKeys.getInt(1);
+                                logArea.append("Added to database: " + gameName + " (ID: " + generatedId + ")\n");
+                                processedCount++;
                             }
                         }
                     }
-                } catch (SQLException | JSONException e) {
-                    logArea.append("Error processing " + file.getName() + ": " + e.getMessage() + "\n");
                 }
+            } catch (SQLException e) {
+                logArea.append("Error processing " + file.getName() + ": " + e.getMessage() + "\n");
             }
-                    
-        } catch (SQLException e) {
-            logArea.append("Database error: " + e.getMessage() + "\n");
         }
+        logArea.append("Scan complete. Processed " + processedCount + " games.\n");
     }
             
     private void createGameMetadata(int gameId, String gameName, String gamePath, String imageUrl, String description) {
         try {
             // Use GameManager facade to create and save the game
             GameManager gameManager = GameManager.getInstance();
-            List<Game> games = new ArrayList<>(gameManager.getAllGames());
+            
+            // Get existing games, handle case where getAllGames() might be empty
+            List<Game> games;
+            try {
+                games = new ArrayList<>(gameManager.getAllGames());
+            } catch (Exception e) {
+                // If we can't get games, start with an empty list
+                games = new ArrayList<>();
+                logArea.append("Warning: Could not load existing games, starting fresh.\n");
+            }
+            
+            // Check if game with this ID already exists
+            boolean gameExists = games.stream().anyMatch(g -> g.getID() == gameId);
+            if (gameExists) {
+                logArea.append("Game with ID " + gameId + " already exists. Skipping...\n");
+                return;
+            }
             
             // Create and add the new game
             Game newGame = gameManager.createGame(gameName, description, imageUrl, gameId, gamePath);
-            games.add(newGame);
-            
-            // Save all games
-            gameManager.saveGames(games);
+            if (newGame != null) {
+                games.add(newGame);
+                // Save all games
+                gameManager.saveGames(games);
+                logArea.append("Successfully added game: " + gameName + "\n");
+            } else {
+                logArea.append("Failed to create game: " + gameName + "\n");
+            }
             
         } catch (Exception e) {
             logArea.append("Error creating game metadata: " + e.getMessage() + "\n");
+            e.printStackTrace(); // Add this for more detailed error logging
         }
     }
     
     private void saveGamesToFile() {
-        ArrayList<Game> games = new ArrayList<>();
-        
-        // Convert JSON array to List<Game>
-        GameManager gameManager = GameManager.getInstance();
-        for (int i = 0; i < gamesArray.length(); i++) {
-            JSONObject gameJson = gamesArray.getJSONObject(i);
-            Game game = gameManager.createGame(
-                gameJson.getString("gameName"),
-                gameJson.optString("gameDescription", ""),
-                gameJson.optString("imageURL", ""),
-                gameJson.getInt("gameID"),
-                gameJson.optString("gameURL", "")
-            );
-            games.add(game);
-        }
-        
-        // Save using GameManager
-        gameManager.saveGames(games);
-        logArea.append("Games saved to file\n");
-    }
+        try {
+            List<Game> games = new ArrayList<>();
+            String sql = "SELECT * FROM gameData";
 
+            try (Connection conn = database.getConnection();
+                 Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+
+                GameManager gm = GameManager.getInstance();
+                while (rs.next()) {
+                    int id = rs.getInt("gameID");
+                    String name = rs.getString("gameName");
+                    String desc = rs.getString("gameDescription");
+                    String url = rs.getString("gameURL");
+                    String img = rs.getString("imageURL");
+
+                    Game game = gm.createGame(name, desc != null ? desc : "", img != null ? img : "", id, url != null ? url : "");
+                    games.add(game);
+                }
+            }
+
+            // Convert to JSON array and write to file
+            JSONArray jsonArray = new JSONArray();
+            for (Game game : games) {
+                JSONObject gameJson = new JSONObject();
+                gameJson.put("gameID", game.getID());
+                gameJson.put("gameName", game.getTitle());
+                gameJson.put("gameURL", game.getGameUrl());
+                gameJson.put("imageURL", game.getImageUrl());
+                gameJson.put("gameDescription", game.getDescription());
+                jsonArray.put(gameJson);
+            }
+
+            try (FileWriter file = new FileWriter("src/main/resources/store_games.json")) {
+                file.write(jsonArray.toString(4));
+                logArea.append("Successfully saved " + games.size() + " games to store_games.json\n");
+            }
+
+        } catch (SQLException | IOException e) {
+            logArea.append("Error saving games to file: " + e.getMessage() + "\n");
+            e.printStackTrace();
+        }
+    }
 
     private void addMegaQueryButton(JPanel buttonPanel) {
         JButton megaQueryButton = new JButton("Run MegaQuery");

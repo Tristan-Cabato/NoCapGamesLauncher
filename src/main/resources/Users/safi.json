@@ -1,7 +1,13 @@
 {
-  "database": {},
-  "ownedGameIds": [],
-  "userID": 116,
+  "database": {
+    "DB_USER": "Admin"
+  },
+  "ownedGameIds": [
+    2,
+    6,
+    5
+  ],
+  "userID": 9.0,
   "username": "safi",
-  "password": "safisafi"
+  "password": "password"
 }
