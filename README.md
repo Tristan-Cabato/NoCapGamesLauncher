@@ -1,64 +1,96 @@
-# Proxy Pattern completion
-    - Added an "event listener" to load images when the panel is opened, otherwise destroy it.
-    - I put it in quotations because its by no means an event listener, it's just a boolean check. ```if (currentPanel != null) {
-            if (currentPanel instanceof Library) {
-                ((Library) currentPanel).hidePanel();
-            } else if (currentPanel instanceof Store) {
-                ((Store) currentPanel).hidePanel();
-            } else if (currentPanel == gameDetailPanel) {
-                gameDetailPanel.setVisible(false);
-            }
-        }```
-    - The friends panel is still a problem, I mean I guess we can just make them not have pictures - that way it won't be proxy, just JSON reading of all existing users and their owned games key.
+# Memento Pattern completion
+    - Reverted the "remember me" checkbox. It's a literal save state of the user's login (Panel, login, user data)
 
-# Game Detail overhaul
-    - I might have spent more time here than I should have. I just reformatted it to show the photo, description, and made the button dynamic whether the user owns the game or not.
+# Friends Panel update
+    - Changed the input of the friends to be all the preexisting users. Its still problematic but for the sake of time, let's leave it for later
+
+# Singleton Pattern completion
+    - Database connections are now handed over to an instance class of DatabaseHandler
+    - Its not intentionally Singleton, but the Facade pattern 'GameManager' is a Singleton
+
+# Iterator Pattern completion
+    - All exposed game and user iterations are now handled by Iterator Pattern
+
+# Facade Pattern completion
+    - All game management is now handled by the GameManager facade
+    - Again it's technically a Singleton Facade but it's not intentionally Singleton
 
 # Next Agenda
-    - WE NEED TO GET THIS DONE BY TOMORROW HOLY SHIT
-
-    Put ts in the end of the stack:
-        - Sidebar Panel should look more like the first version
-        - Searchbar integration
-        - Code cleanup
-        - JavaFX integration
-        - Singleton fix
+    - Sidebar Panel should look more like the first version (Also its broken)
+    - Searchbar integration
+    - Code cleanup
+    - JavaFX integration
 
 
 ### Files Modified:
-    >> Proxy Pattern complete <<
+    >> Memento Pattern complete <<
     /gui
         mainFrame.java
-    /panels
-        LoginForm.java
-        Library.java
-        Store.java
-        GameDetail.java
+        /panels
+            LoginForm.java
+    /userManager
+        UserMemento.java
+    /iterator
+        SessionIterator.java
 
-    >> Game Detail Restructure | 1.0 <<
+    >> All users -> Friends Panel <<
+    /database
+        DatabaseHandler.java
+    /panels
+        Friends.java
+    /iterator
+        FriendsIterator.java
+
+    >> Class sorting and Database Singleton <<
+    /game_manager
+        Game.java
+        GameMetadata.java
+        GameRepository.java
     /gui
         mainFrame.java
-            - Handles what panel unloads (pause)
-    /panels
-        ↳ GameDetail.java
-    
-    >> Game Detail Restructure | 1.1 <<
-    /gui
-        mainFrame.java
-    /components
-        GameCardCreator.java
-    /panels
-        ↳ GameDetail.java
-        Library.java
+        /components
+            HeaderCreator.java
+            sidebarCreator.java
+        /panels
+            Friends.java
+            GameDetail.java
+            Library.java
+            LoginForm.java
+            Search.java
+            Store.java
+    /iterator
+        FriendsIterator.java
+        SessionIterator.java
+
+    >> Pattern Cleanup | 1.0 <<
+    /main
+        NoCapGamesLauncher.java
+    /database
+        DatabaseHandler.java
+        databaseMegaquery.java
+    /gui/panels
         Search.java
-        Store.java
-
-    >> Game Detail Restructure | 1.2 <<
     /userManager
         UserGameData.java
-    /panels
-        ↳ GameDetail.java
-    Test.json
 
-    >> Proxy and Iterator Patterns <<
+    >> Added all necessary patterns <<
+    /database
+        DatabaseHandler.java
+        databaseMegaquery.java
+    /game_manager
+        GameManager.java
+    /gui/components
+        HeaderCreator.java
+        sidebarCreator.java
+    /gui/panels
+        GameDetail.java
+        Library.java
+        Store.java
+    /iterator
+        GameDescriptionIterator.java
+        LibraryGameIterator.java
+        StoreGameIterator.java
+        UserDataIterator.java
+    /resourceHandling
+        GameCardData.java
     README.md

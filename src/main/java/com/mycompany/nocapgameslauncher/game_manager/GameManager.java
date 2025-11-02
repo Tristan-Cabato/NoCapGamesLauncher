@@ -1,6 +1,9 @@
 package com.mycompany.nocapgameslauncher.game_manager;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Facade for the game_manager subsystem.
@@ -25,6 +28,10 @@ public class GameManager {
     public GameIterator getGameIterator() {
         return new GameIterator(GameRepository.loadGames());
     }
+
+    public Map<String, String> getGameDescriptions(InputStream gameDataStream) throws IOException {
+        return GameDescriptionIterator.fromJson(gameDataStream).toMap();
+    }
     
     public void saveGames(List<Game> games) {
         GameRepository.saveGames(games);
@@ -35,8 +42,9 @@ public class GameManager {
     }
     
     public Game getGameById(int gameId) {
-        List<Game> games = getAllGames();
-        for (Game game : games) {
+        GameIterator iterator = getGameIterator();
+        while (iterator.hasNext()) {
+            Game game = iterator.next();
             if (game.getID() == gameId) {
                 return game;
             }

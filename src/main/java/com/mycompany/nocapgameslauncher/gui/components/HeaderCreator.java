@@ -148,15 +148,6 @@ public class HeaderCreator {
                 NoCapGamesLauncher.main(null);
             });
             profileMenu.add(logoutItem);
-
-            /* JMenuItem loginSignoutItem = new JMenuItem("Login/Signout");
-            loginSignoutItem.setForeground(LightModeToggle.getTextColor());
-            loginSignoutItem.setBackground(LightModeToggle.getComponentColor());
-            loginSignoutItem.addActionListener(_ -> {
-                JOptionPane.showMessageDialog(frame, "Login/Signout clicked!");
-            });
-            profileMenu.add(loginSignoutItem); Redundant */
-
             profileMenu.show(profileIcon, 0, profileIcon.getHeight());
         });
         profilePanel.add(profileIcon);

@@ -2,6 +2,7 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
+import com.mycompany.nocapgameslauncher.resourceHandling.GameCardData;
 import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
 import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 
@@ -20,6 +21,7 @@ import java.util.Objects;
 
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
+import com.mycompany.nocapgameslauncher.iterator.LibraryGameIterator;
 
 public class Library extends ThemePanel{
     private final mainFrame frame;
@@ -88,50 +90,50 @@ public class Library extends ThemePanel{
                 FontManager.setFont(noGamesLabel, Font.PLAIN, 20);
                 cardsPanel.add(noGamesLabel);
             } else {
+                List<Integer> gameIds = new ArrayList<>(ownedGameIdsDouble.size());
+                for (Double id : ownedGameIdsDouble) {
+                    gameIds.add(id.intValue());
+                }
+
+                LibraryGameIterator gameIterator = new LibraryGameIterator(gameIds);
                 gameCardsList = new ArrayList<>();
-                for (Double gameIdDouble : ownedGameIdsDouble) {
-                    int gameId = gameIdDouble.intValue();
-                    Map<String, String> gameDetails = resourceLoader.getGameById(gameId);
-                    if (gameDetails != null) {
-                        String title = NameFormatting.formatGameName(gameDetails.get("gameName"));
-                        String description = gameDetails.get("description");
-                        String iconPath = "ImageResources/" + title.toLowerCase().replace(" ", "_") + ".jpg";
-                        ImageIcon gameIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
+                
+                while (gameIterator.hasNext()) {
+                    GameCardData cardData = gameIterator.next();
+                    if (cardData != null) {
+                        String title = cardData.title;
+                        int gameId = cardData.gameId;
                         
                         JPanel card = GameCardCreator.createGameCard(
                             title,
-                            description,
-                            gameIcon,
+                            cardData.description,
+                            new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE),
                             gameId,
                             () -> frame.showGameDetail(title, gameId)
                         );
                         
                         JLabel imageLabel = (JLabel) ((BorderLayout)card.getLayout()).getLayoutComponent(BorderLayout.CENTER);
-                        
-                        // Create a proxy image that will load the actual image when needed
                         ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
                         imageLabel.setIcon(proxyIcon);
                         
-                        // Load actual image in background
                         new Thread(() -> {
                             try {
-                                Thread.sleep(1200); // 1.2 seconds | Simulate loading
-                                ImageIcon actualIcon = resourceLoader.loadIcon(iconPath);
+                                Thread.sleep(1200); // Simulate loading | 1.2 seconds
+                                ImageIcon actualIcon = resourceLoader.loadIcon(cardData.iconPath);
                                 if (actualIcon != null) {
                                     SwingUtilities.invokeLater(() -> {
-                                        // Update the image label with the actual icon
                                         Image scaled = actualIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
                                         imageLabel.setIcon(new ImageIcon(scaled));
                                         imageLabel.repaint();
                                     });
                                 }
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
+                            } catch (Exception e) {
+                                System.err.println("Error loading image: " + cardData.iconPath);
                             }
-                        }, "ImageLoader-" + title).start();
+                        }).start();
                         
-                        cardsPanel.add(card);
                         gameCardsList.add(card);
+                        cardsPanel.add(card);
                     }
                 }
             }

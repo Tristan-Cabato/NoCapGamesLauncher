@@ -153,87 +153,38 @@ public class databaseMegaquery extends JFrame {
         }
         logArea.append("Scan complete. Processed " + processedCount + " games.\n");
     }
-            
-    private void createGameMetadata(int gameId, String gameName, String gamePath, String imageUrl, String description) {
-        try {
-            // Use GameManager facade to create and save the game
-            GameManager gameManager = GameManager.getInstance();
-            
-            // Get existing games, handle case where getAllGames() might be empty
-            List<Game> games;
-            try {
-                games = new ArrayList<>(gameManager.getAllGames());
-            } catch (Exception e) {
-                // If we can't get games, start with an empty list
-                games = new ArrayList<>();
-                logArea.append("Warning: Could not load existing games, starting fresh.\n");
-            }
-            
-            // Check if game with this ID already exists
-            boolean gameExists = games.stream().anyMatch(g -> g.getID() == gameId);
-            if (gameExists) {
-                logArea.append("Game with ID " + gameId + " already exists. Skipping...\n");
-                return;
-            }
-            
-            // Create and add the new game
-            Game newGame = gameManager.createGame(gameName, description, imageUrl, gameId, gamePath);
-            if (newGame != null) {
-                games.add(newGame);
-                // Save all games
-                gameManager.saveGames(games);
-                logArea.append("Successfully added game: " + gameName + "\n");
-            } else {
-                logArea.append("Failed to create game: " + gameName + "\n");
-            }
-            
-        } catch (Exception e) {
-            logArea.append("Error creating game metadata: " + e.getMessage() + "\n");
-            e.printStackTrace(); // Add this for more detailed error logging
-        }
-    }
     
     private void saveGamesToFile() {
-        try {
+        try (Connection conn = database.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM gameData")) {
+            
             List<Game> games = new ArrayList<>();
-            String sql = "SELECT * FROM gameData";
-
-            try (Connection conn = database.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
-
-                GameManager gm = GameManager.getInstance();
-                while (rs.next()) {
-                    int id = rs.getInt("gameID");
-                    String name = rs.getString("gameName");
-                    String desc = rs.getString("gameDescription");
-                    String url = rs.getString("gameURL");
-                    String img = rs.getString("imageURL");
-
-                    Game game = gm.createGame(name, desc != null ? desc : "", img != null ? img : "", id, url != null ? url : "");
-                    games.add(game);
-                }
+            GameManager gm = GameManager.getInstance();
+            
+            while (rs.next()) {
+                int id = rs.getInt("gameID");
+                String name = rs.getString("gameName");
+                String desc = rs.getString("gameDescription");
+                String url = rs.getString("gameURL");
+                String img = rs.getString("imageURL");
+                
+                Game game = gm.createGame(
+                    name != null ? name : "", 
+                    desc != null ? desc : "", 
+                    img != null ? img : "", 
+                    id, 
+                    url != null ? url : ""
+                );
+                games.add(game);
             }
-
-            // Convert to JSON array and write to file
-            JSONArray jsonArray = new JSONArray();
-            for (Game game : games) {
-                JSONObject gameJson = new JSONObject();
-                gameJson.put("gameID", game.getID());
-                gameJson.put("gameName", game.getTitle());
-                gameJson.put("gameURL", game.getGameUrl());
-                gameJson.put("imageURL", game.getImageUrl());
-                gameJson.put("gameDescription", game.getDescription());
-                jsonArray.put(gameJson);
-            }
-
-            try (FileWriter file = new FileWriter("src/main/resources/store_games.json")) {
-                file.write(jsonArray.toString(4));
-                logArea.append("Successfully saved " + games.size() + " games to store_games.json\n");
-            }
-
-        } catch (SQLException | IOException e) {
-            logArea.append("Error saving games to file: " + e.getMessage() + "\n");
+            
+            // Save the games to the JSON file
+            gm.saveGames(games);
+            logArea.append("Successfully saved " + games.size() + " games from database to store_games.json\n");
+            
+        } catch (SQLException e) {
+            logArea.append("Error saving games: " + e.getMessage() + "\n");
             e.printStackTrace();
         }
     }

@@ -5,6 +5,8 @@ import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.userManager.UserGameData;
 import com.mycompany.nocapgameslauncher.userManager.UserGameManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
+import com.mycompany.nocapgameslauncher.gui.components.sidebarCreator;
+import com.mycompany.nocapgameslauncher.game_manager.GameManager;
 
 import javax.swing.*;
 
@@ -235,38 +237,12 @@ public class GameDetail extends ThemePanel {
 
     private Map<String, String> loadGameDescriptions() {
         Map<String, String> descriptions = new HashMap<>();
-        
-        try (InputStream is = getClass().getResourceAsStream("/store_games.json");
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
-            
-            // Read the entire file content
-            StringBuilder jsonContent = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonContent.append(line.trim());
+        try (InputStream inputStream = getClass().getResourceAsStream("/data/games.json")) {
+            if (inputStream != null) {
+                return GameManager.getInstance().getGameDescriptions(inputStream);
             }
-            
-            // Parse JSON using JSONObject
-            JSONArray gamesArray = new JSONArray(jsonContent.toString());
-            
-            for (int i = 0; i < gamesArray.length(); i++) {
-                try {
-                    JSONObject game = gamesArray.getJSONObject(i);
-                    String gameName = game.optString("gameName");
-                    String gameDescription = game.optString("gameDescription", "No description available.");
-                    
-                    if (gameName != null && !gameName.isEmpty()) {
-                        descriptions.put(gameName, gameDescription);
-                    }
-                } catch (JSONException e) {
-                    System.err.println("Error parsing game entry at index " + i + ": " + e.getMessage());
-                }
-            }
-            
         } catch (IOException e) {
-            System.err.println("Error reading game data: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("Error parsing game data: " + e.getMessage());
+            System.err.println("Error loading game descriptions: " + e.getMessage());
         }
         return descriptions;
     }
@@ -351,6 +327,15 @@ public class GameDetail extends ThemePanel {
             userGameData.removeGame(currentGameId);
             userOwned = false;
             updateButtonStates();
+            
+            // Force a UI update on the Event Dispatch Thread
+            SwingUtilities.invokeLater(() -> {
+                // Force a repaint of the entire frame
+                if (getTopLevelAncestor() != null) {
+                    getTopLevelAncestor().revalidate();
+                    getTopLevelAncestor().repaint();
+                }
+            });
         } catch (Exception e) {
             System.err.println("Error removing game from library: " + e.getMessage());
             JOptionPane.showMessageDialog(

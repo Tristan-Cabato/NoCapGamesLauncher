@@ -1,14 +1,10 @@
 package com.mycompany.nocapgameslauncher.database;
 
-import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.userManager.UserGameData;
 
 import java.sql.*;
 
-import com.google.gson.*;
-
 import java.io.*;
-import java.nio.file.*;
 import java.util.ArrayList;
 
 import com.mycompany.nocapgameslauncher.userManager.UserRepository;
@@ -95,9 +91,9 @@ public class DatabaseHandler {
     }
 
     public boolean register(String username, String password) throws SQLException {
-    String insertSql = "INSERT INTO users (username, password) " +
-                      "SELECT ?, ? FROM DUAL " +
-                      "WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = ?)";
+        String insertSql = "INSERT INTO users (username, password) " +
+                        "SELECT ?, ? FROM DUAL " +
+                        "WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = ?)";
 
         try (Connection conn = getConnection();
             PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
