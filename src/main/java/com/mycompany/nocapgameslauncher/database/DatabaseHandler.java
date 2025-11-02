@@ -1,7 +1,7 @@
 package com.mycompany.nocapgameslauncher.database;
 
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
-import com.mycompany.nocapgameslauncher.gui.userManager.UserGameData;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.userManager.UserGameData;
 
 import java.sql.*;
 
@@ -11,25 +11,16 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 
-import com.mycompany.nocapgameslauncher.gui.userManager.UserRepository;
+import com.mycompany.nocapgameslauncher.userManager.UserRepository;
 
 public class DatabaseHandler {
+    private static DatabaseHandler instance;
     private static String currentUser;
-    
-    public static String getCurrentUser() {
-        return currentUser;
-    }
-    
-    public static void setCurrentUser(String username) {
-        currentUser = username;
-    }
-    private static final Gson gson = new Gson();
-    private static final String USERS_DIR = resourceLoader.RESOURCE_DIRECTORY + "Users/";
     private static final String DB_URL = "jdbc:mysql://localhost:3306/nocapserver";
-    private static final String DB_USER = "Admin";
+    public final String DB_USER = "Admin";
     private static final String DB_PASS = "nocap";
-
-    static {
+    
+    private DatabaseHandler() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
@@ -37,28 +28,89 @@ public class DatabaseHandler {
         }
     }
 
-    private static Connection getConnection() throws SQLException {
+    // Getters
+
+    public static DatabaseHandler getInstance() {
+        if (instance == null) {
+            instance = new DatabaseHandler();
+        } return instance;
+    }
+
+    public static String getCurrentUser() {
+        return currentUser;
+    }
+    
+    public static void setCurrentUser(String username) {
+        currentUser = username;
+    }
+
+    public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
     }
 
-    public static boolean register(String username, String password) throws SQLException {
+    public int getUserId(String username) throws SQLException {
+        String sql = "SELECT userID FROM users WHERE username = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("userID");
+                }
+            }
+        }
+        return -1; // User not found
+    }
+
+    // Login Management
+    public boolean login(String username, String password) throws SQLException, IOException {
+        String sql = "SELECT userID FROM users WHERE username = ? AND password = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            try (ResultSet rs = stmt.executeQuery()) {
+                boolean loginSuccess = rs.next();
+                if (loginSuccess && !username.equals("Admin")) {
+                    // Skip admin
+                    UserRepository userRepo = new UserRepository();
+                    UserGameData userData = userRepo.loadUser(username);
+                    
+                    // If user data doesn't exist or needs to be refreshed
+                    if (userData == null) {
+                        userData = new UserGameData(username);
+                    }
+                    userData.setUserID(getUserId(username));
+                    userData.setUsername(username);
+                    userData.setPassword(password); // Store the password (for testing only)
+                    
+                    // Save the user data (will overwrite existing file)
+                    userRepo.saveUser(userData);
+                } return loginSuccess;
+            }
+        }
+    }
+
+    public boolean register(String username, String password) throws SQLException {
     String insertSql = "INSERT INTO users (username, password) " +
                       "SELECT ?, ? FROM DUAL " +
                       "WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = ?)";
 
-    try (Connection conn = getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
-        
-        pstmt.setString(1, username);
-        pstmt.setString(2, password);
-        pstmt.setString(3, username);  // For the NOT EXISTS check
-        
-        int affectedRows = pstmt.executeUpdate();
-        return affectedRows > 0;  // Returns true if a new user was inserted
+        try (Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            pstmt.setString(3, username);  // For the NOT EXISTS check
+            
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;  // Returns true if a new user was inserted
+        }
     }
-}
 
-    public static void initializeDatabase() {
+    public void initializeDatabase() {
         String[] initQueries = {
             "CREATE DATABASE IF NOT EXISTS nocapserver",
             "USE nocapserver",
@@ -81,93 +133,8 @@ public class DatabaseHandler {
             System.err.println("Error initializing database: " + e.getMessage());
         }
     }
-    
-        public static boolean login(String username, String password) throws SQLException, IOException {
-        String sql = "SELECT userID FROM users WHERE username = ? AND password = ?";
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            try (ResultSet rs = stmt.executeQuery()) {
-                boolean loginSuccess = rs.next();
-                if (loginSuccess && !username.equals("Admin")) {
-                    // Skip user data management for Admin user
-                    // For all other users, manage their data file
-                    UserRepository userRepo = new UserRepository();
-                    UserGameData userData = userRepo.loadUser(username);
-                    
-                    // If user data doesn't exist or needs to be refreshed
-                    if (userData == null) {
-                        userData = new UserGameData(username);
-                    }
-                    
-                    // Update user data with latest info
-                    userData.setUserID(getUserId(username));
-                    userData.setUsername(username);
-                    userData.setPassword(password); // Store the password (for testing only)
-                    
-                    // Save the user data (will overwrite existing file)
-                    userRepo.saveUser(userData);
-                }
-                return loginSuccess;
-            }
-        }
-    }
-    
-    public static int getUserId(String username) throws SQLException {
-        String sql = "SELECT userID FROM users WHERE username = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("userID");
-                }
-            }
-        }
-        return -1; // User not found
-    }
-    
-    public static UserGameData getUserGames(String username) {
-        String filename = USERS_DIR + username + ".json";
-        try {
-            String json = new String(Files.readAllBytes(Paths.get(filename)));
-            UserGameData data = gson.fromJson(json, UserGameData.class);
-            if (data == null) {
-                throw new IllegalStateException("Failed to parse user data for: " + username);
-            }
-            return data;
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read user data for: " + username, e);
-        }
-    }
-    
-    public static boolean addGameToUser(String username, int gameId) {
-        try {
-            UserGameData userData = getUserGames(username);
-            if (userData == null) return false;
-            
-            userData.addGame(gameId);
-            saveUserData(userData);
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
-    private static void saveUserData(UserGameData userData) {
-        String filename = USERS_DIR + userData.getUsername() + ".json";
-        try (Writer writer = new FileWriter(filename)) {
-            gson.toJson(userData, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void updateGamePlayData(int userId, String gameId, long additionalPlayTime) throws SQLException {
+    public void updateGamePlayData(int userId, String gameId, long additionalPlayTime) throws SQLException {
         String updateSql = "UPDATE user_games SET lastPlayed = NOW(), playTime = playTime + ? " +
                          "WHERE userId = ? AND gameId = ?";
         String insertSql = "INSERT INTO user_games (userId, gameId, lastPlayed, playTime) " +
@@ -197,7 +164,7 @@ public class DatabaseHandler {
         }
     }
 
-    public static ArrayList<String> getAllUsers() {
+    public ArrayList<String> getAllUsers() {
         String sql = "SELECT username FROM users";
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();

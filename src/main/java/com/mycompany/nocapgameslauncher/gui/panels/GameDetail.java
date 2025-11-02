@@ -1,9 +1,9 @@
 package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
-import com.mycompany.nocapgameslauncher.gui.userManager.UserGameData;
-import com.mycompany.nocapgameslauncher.gui.userManager.UserGameManager;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.userManager.UserGameData;
+import com.mycompany.nocapgameslauncher.userManager.UserGameManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
 import javax.swing.*;
@@ -127,44 +127,14 @@ public class GameDetail extends ThemePanel {
         add(contentPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        if (userOwned) {
-            playButton.addActionListener(_ -> {
-                String gameTitle = gameTitleLabel.getText();
-                String gamePath = resourceLoader.RESOURCE_DIRECTORY + "Executables/" + 
-                                gameTitle + ".lnk";
-                
-                try {
-                    File file = new File(gamePath);
-                    if (file.exists()) {
-                        Desktop.getDesktop().open(file);
-                        JOptionPane optionPane = new JOptionPane(
-                        "Launching " + gameTitle + "...", 
-                        JOptionPane.INFORMATION_MESSAGE);
-                        JDialog dialog = optionPane.createDialog("Game Launched");
-                        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-                        dialog.setModal(false);
-                        dialog.setVisible(true);
-
-                        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
-                            dialog.dispose();
-                        });
-                        timer.setRepeats(false);
-                        timer.start();
-                    } else {
-                        JOptionPane.showMessageDialog(this, 
-                            "Executable not found at: " + gamePath, 
-                            "Error", 
-                            JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (IOException e) {
-                    JOptionPane.showMessageDialog(this, "Error launching game: " + e.getMessage());
-                }
-            });
-        } else {
-            playButton.addActionListener(_ -> {
-                addToLibrary();            
-            });
-        }
+        // Single dynamic action listener that checks ownership state when clicked
+        playButton.addActionListener(_ -> {
+            if (userOwned) {
+                launchGame();
+            } else {
+                addToLibrary();
+            }
+        });
 
         gameDescriptions = loadGameDescriptions();
         updateButtonStates();
@@ -317,6 +287,59 @@ public class GameDetail extends ThemePanel {
                 "Error",
                 JOptionPane.ERROR_MESSAGE
             );
+        }
+    }
+
+    private void launchGame() {
+        try {
+            // Get the game details from JSON to retrieve the gameURL
+            Map<String, String> gameDetails = resourceLoader.getGameById(currentGameId);
+            
+            if (gameDetails == null) {
+                JOptionPane.showMessageDialog(this, 
+                    "Game details not found", 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String gameUrl = gameDetails.get("gameURL");
+            if (gameUrl == null || gameUrl.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Game executable path not found", 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            File file = new File(gameUrl);
+            if (file.exists()) {
+                Desktop.getDesktop().open(file);
+                
+                JOptionPane optionPane = new JOptionPane(
+                    "Launching " + gameTitleLabel.getText() + "...", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                JDialog dialog = optionPane.createDialog("Game Launched");
+                dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                dialog.setModal(false);
+                dialog.setVisible(true);
+
+                javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
+                    dialog.dispose();
+                });
+                timer.setRepeats(false);
+                timer.start();
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "Executable not found at: " + gameUrl, 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error launching game: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 

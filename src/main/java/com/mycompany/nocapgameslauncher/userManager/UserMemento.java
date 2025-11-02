@@ -1,13 +1,16 @@
-package com.mycompany.nocapgameslauncher.gui.userManager;
+package com.mycompany.nocapgameslauncher.userManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+
+import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 
 public class UserMemento {
     private static final String SESSION_FILE = "src/main/resources/Users/sessionManager.json";
@@ -18,6 +21,7 @@ public class UserMemento {
     private char[] password;
     private String lastPanel;
     private String themeState;
+    private static DatabaseHandler database = DatabaseHandler.getInstance();
 
     public UserMemento(String username, char[] password, String lastPanel, String themeState) {
         this.username = username;
@@ -41,7 +45,8 @@ public class UserMemento {
     
     // Save memento to file
     public void saveToFile() {
-        if (!rememberMe) {
+        // Don't save session if rememberMe is false, or if the last panel was databaseMegaquery or user is admin
+        if (!rememberMe || "databaseMegaquery".equals(lastPanel) || database.DB_USER.equals(username)) {
             clearSession();
             return;
         }
@@ -83,16 +88,25 @@ public class UserMemento {
     
     // Clear session data
     public static void clearSession() {
-        try (FileWriter writer = new FileWriter(SESSION_FILE)) {
+        try {
+            File sessionFile = new File(SESSION_FILE);
+            // Create parent directories if they don't exist
+            sessionFile.getParentFile().mkdirs();
+            
             JsonObject empty = new JsonObject();
             empty.addProperty("rememberMe", false);
             empty.addProperty("username", "");
             empty.addProperty("password", "");
             empty.addProperty("lastPanel", "");
             empty.addProperty("themeState", "");
-            gson.toJson(empty, writer);
+            
+            try (FileWriter writer = new FileWriter(sessionFile)) {
+                gson.toJson(empty, writer);
+                writer.flush(); // Ensure data is written to disk
+            }
         } catch (IOException e) {
             e.printStackTrace();
+            // Consider adding proper error logging here
         }
     }
 }

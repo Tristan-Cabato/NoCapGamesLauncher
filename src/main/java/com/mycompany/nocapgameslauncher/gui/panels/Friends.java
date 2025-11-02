@@ -4,7 +4,7 @@ import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
-import com.mycompany.nocapgameslauncher.gui.userManager.FriendsIterator;
+import com.mycompany.nocapgameslauncher.userManager.FriendsIterator;
 import javax.swing.*;
 import java.awt.*;
 

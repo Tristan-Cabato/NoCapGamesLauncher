@@ -1,4 +1,4 @@
-package com.mycompany.nocapgameslauncher.gui.userManager;
+package com.mycompany.nocapgameslauncher.userManager;
 
 import java.util.Iterator;
 import java.util.List;

@@ -15,11 +15,14 @@ public class GameRepository {
     public static void saveGames(List<Game> games) {
         try {
             JSONArray gamesArray = new JSONArray();
-            for (Game game : games) {
+            for (int i = 0; i < games.size(); i++) {
+                Game game = games.get(i);
                 JSONObject gameJson = new JSONObject();
-                gameJson.put("title", game.getTitle());
-                gameJson.put("description", game.getDescription());
-                gameJson.put("imageUrl", game.getImageUrl());
+                gameJson.put("gameID", i + 1);  // 1-based index
+                gameJson.put("gameName", game.getTitle());
+                gameJson.put("imageURL", game.getImageUrl());
+                gameJson.put("gameURL", game.getGameUrl()); 
+                gameJson.put("gameDescription", game.getDescription());
                 gamesArray.put(gameJson);
             }
             
@@ -43,7 +46,7 @@ public class GameRepository {
             for (int i = 0; i < gamesArray.length(); i++) {
                 JSONObject gameJson = gamesArray.getJSONObject(i);
                 String gameName = gameJson.getString("gameName");
-                String formattedName = com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting.formatGameName(gameName);
+                String formattedName = com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting.formatGameName(gameName);
                 String imageUrl = gameJson.optString("imageURL", "");
                 
                 // Convert the path to be relative to the resources folder and fix spaces in filenames
@@ -68,7 +71,8 @@ public class GameRepository {
                     formattedName,  // Use the formatted name for display
                     gameJson.optString("gameDescription", ""),
                     imageUrl,
-                    i + 1
+                    i + 1,
+                    gameJson.optString("gameURL", "")
                 ));
             }
             return games;

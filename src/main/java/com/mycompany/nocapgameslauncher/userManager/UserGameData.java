@@ -1,7 +1,7 @@
-package com.mycompany.nocapgameslauncher.gui.userManager;
+package com.mycompany.nocapgameslauncher.userManager;
 
 import com.google.gson.Gson;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -14,6 +14,7 @@ import java.util.Map;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 
 public class UserGameData {
+    private DatabaseHandler database = DatabaseHandler.getInstance();
     private List<Integer> ownedGameIds;
     private int userID;
     private String username;
@@ -28,7 +29,7 @@ public class UserGameData {
         this.username = username;
         this.ownedGameIds = new ArrayList<>();
         try {
-            this.userID = DatabaseHandler.getUserId(username);
+            this.userID = database.getUserId(username);
         } catch (SQLException e) {
             System.err.println("Error getting user ID: " + e.getMessage());
         }

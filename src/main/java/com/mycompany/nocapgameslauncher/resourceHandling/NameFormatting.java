@@ -1,4 +1,4 @@
-package com.mycompany.nocapgameslauncher.gui.resourceHandling;
+package com.mycompany.nocapgameslauncher.resourceHandling;
 
 import java.util.*;
 

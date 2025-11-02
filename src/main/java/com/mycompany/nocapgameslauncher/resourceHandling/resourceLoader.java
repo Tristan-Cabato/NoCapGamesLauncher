@@ -1,4 +1,4 @@
-package com.mycompany.nocapgameslauncher.gui.resourceHandling;
+package com.mycompany.nocapgameslauncher.resourceHandling;
 
 import java.io.*;
 import java.net.*;
@@ -44,6 +44,7 @@ public class resourceLoader {
                     gameDetails.put("gameName", game.getString("gameName"));
                     gameDetails.put("gameDescription", game.optString("gameDescription", "No description available."));
                     gameDetails.put("imageURL", game.optString("imageURL", ""));
+                    gameDetails.put("gameURL", game.optString("gameURL", ""));
                     return gameDetails;
                 }
             }

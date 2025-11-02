@@ -2,10 +2,10 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.game_manager.Game;
 import com.mycompany.nocapgameslauncher.game_manager.GameIterator;
 
@@ -17,7 +17,7 @@ import java.util.*;
 import javax.swing.border.EmptyBorder;
 
 import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
+import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
 
 public class Store extends ThemePanel {
     @SuppressWarnings("unused") private final mainFrame frame;

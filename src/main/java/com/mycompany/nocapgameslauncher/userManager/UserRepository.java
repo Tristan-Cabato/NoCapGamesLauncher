@@ -1,4 +1,4 @@
-package com.mycompany.nocapgameslauncher.gui.userManager;
+package com.mycompany.nocapgameslauncher.userManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

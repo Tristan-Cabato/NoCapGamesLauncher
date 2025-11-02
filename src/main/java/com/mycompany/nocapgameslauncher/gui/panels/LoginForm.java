@@ -3,8 +3,8 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
-import com.mycompany.nocapgameslauncher.gui.userManager.SessionIterator;
-import com.mycompany.nocapgameslauncher.gui.userManager.UserMemento;
+import com.mycompany.nocapgameslauncher.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -13,12 +13,13 @@ import java.awt.event.*;
 import java.sql.*;
 import java.util.Arrays;
 import java.io.*;
-import com.mycompany.nocapgameslauncher.gui.userManager.UserMemento;
+import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 
 public class LoginForm extends JPanel {
     // Form fields
     public boolean userRemembered;
 
+    private DatabaseHandler database = DatabaseHandler.getInstance();
     private JTextField userField;
     private JPasswordField passField;
     private JPasswordField regPassField;
@@ -500,7 +501,7 @@ public class LoginForm extends JPanel {
         }
 
         try {
-            boolean ok = DatabaseHandler.login(username, password);
+            boolean ok = database.login(username, password);
             if (ok) {
                 // Get the last panel from saved session or default to LIBRARY
                 String lastPanel = (savedSession != null && savedSession.getLastPanel() != null) 
@@ -562,7 +563,7 @@ public class LoginForm extends JPanel {
         }
 
         try {
-            boolean created = DatabaseHandler.register(username, password);
+            boolean created = database.register(username, password);
             if (created) {
                 showModernSuccess("Account created successfully!\nYou can now sign in.");
                 cardLayout.show(cardPanel, "LOGIN");

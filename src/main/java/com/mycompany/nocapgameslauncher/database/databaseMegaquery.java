@@ -23,9 +23,10 @@ import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
 import com.mycompany.nocapgameslauncher.game_manager.Game;
 import com.mycompany.nocapgameslauncher.game_manager.GameMetadata;
 import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
+import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 
 public class databaseMegaquery extends JFrame {
-    private DatabaseHandler dbHandler = new DatabaseHandler();
+    private DatabaseHandler database = DatabaseHandler.getInstance();
     private JTextArea logArea;
     private JScrollPane scrollPane;
     private int processedCount = 0;
@@ -113,11 +114,8 @@ public class databaseMegaquery extends JFrame {
         }
         
         gamesArray = new JSONArray(); // Reset the array for new scan
-        String url = "jdbc:mysql://localhost:3306/nocapserver?useSSL=false&allowPublicKeyRetrieval=true";
-        String user = "Admin";
-        String password = "nocap";
         
-        try (Connection conn = DriverManager.getConnection(url, user, password)) {
+        try (Connection conn = database.getConnection()) {
             String clearQuery = "TRUNCATE TABLE gameData";
             try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate(clearQuery);
@@ -184,17 +182,19 @@ public class databaseMegaquery extends JFrame {
         // Convert JSON array to List<Game>
         for (int i = 0; i < gamesArray.length(); i++) {
             JSONObject gameJson = gamesArray.getJSONObject(i);
-            Game game = new GameMetadata(  // Changed from Game to GameMetadata
+            Game game = new GameMetadata(
                 gameJson.getString("gameName"),
                 gameJson.optString("gameDescription", ""),
                 gameJson.optString("imageURL", ""),
-                i + 1
+                i + 1,
+                gameJson.optString("gameURL", "")
             );
             games.add(game);
         }
         
         // Save using GameRepository
         GameRepository.saveGames(games);
+        logArea.append("Games saved to file\n");
     }
 
 
@@ -220,8 +220,7 @@ public class databaseMegaquery extends JFrame {
             ")"
         }; // Game Description can be modified, it has a default value, just ALTER it
 
-        String url = "jdbc:mysql://localhost:3306/mysql?useSSL=false&allowPublicKeyRetrieval=true";
-        try (Connection conn = DriverManager.getConnection(url, "Admin", "nocap")) {
+        try (Connection conn = database.getConnection()) {
             for (String query : queries) {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.executeUpdate(query);

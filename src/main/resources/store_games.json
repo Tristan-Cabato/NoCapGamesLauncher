@@ -4,7 +4,7 @@
         "gameName": "genshin_impact",
         "imageURL": "src/main/resources/ImageResources/genshin impact.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Genshin Impact.lnk",
-        "gameDescription": "This game is ah, remove Miliastra Sandbox"
+        "gameDescription": "This is a description"
     },
     {
         "gameID": 2,
@@ -22,20 +22,27 @@
     },
     {
         "gameID": 4,
+        "gameName": "project_diva",
+        "imageURL": "src/main/resources/ImageResources/project diva.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Project DIVA.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 5,
         "gameName": "terraria",
         "imageURL": "src/main/resources/ImageResources/terraria.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Terraria.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 5,
+        "gameID": 6,
         "gameName": "tlauncher",
         "imageURL": "src/main/resources/ImageResources/tlauncher.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\TLauncher.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 6,
+        "gameID": 7,
         "gameName": "uma_musume",
         "imageURL": "src/main/resources/ImageResources/uma musume.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Uma Musume.lnk",

@@ -3,14 +3,14 @@ package com.mycompany.nocapgameslauncher;
 
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.panels.LoginForm;
-import com.mycompany.nocapgameslauncher.gui.userManager.SessionIterator;
-import com.mycompany.nocapgameslauncher.gui.userManager.UserMemento;
+import com.mycompany.nocapgameslauncher.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 import javax.swing.*;
 
 public class NoCapGamesLauncher {
     public static void main(String[] args) {
         // Initialize database and load any saved session
-        DatabaseHandler.initializeDatabase();
+        DatabaseHandler.getInstance().initializeDatabase();
         
         // Load saved session if exists
         UserMemento savedSession = SessionIterator.getCurrentMemento();

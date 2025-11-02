@@ -2,8 +2,8 @@ package com.mycompany.nocapgameslauncher.gui.components;
 
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 
 import java.awt.*;

@@ -2,8 +2,8 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.resourceLoader;
-import com.mycompany.nocapgameslauncher.gui.resourceHandling.NameFormatting;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;

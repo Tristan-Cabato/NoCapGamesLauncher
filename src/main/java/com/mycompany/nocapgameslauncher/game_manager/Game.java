@@ -4,5 +4,6 @@ public interface Game {
     int getID();
     String getTitle();
     String getDescription();
+    String getGameUrl();
     String getImageUrl();
 }
