@@ -1,23 +1,19 @@
 package com.mycompany.nocapgameslauncher.gui.panels;
 
-import com.mycompany.nocapgameslauncher.gui.mainFrame;
+import com.mycompany.nocapgameslauncher.game_manager.Game;
+import com.mycompany.nocapgameslauncher.game_manager.GameManager;
 import com.mycompany.nocapgameslauncher.gui.components.GameCardCreator;
+import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
 import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
-import com.mycompany.nocapgameslauncher.game_manager.Game;
-import com.mycompany.nocapgameslauncher.game_manager.GameIterator;
 
 import javax.swing.*;
-
 import java.awt.*;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collection;
 import javax.swing.border.EmptyBorder;
-
-import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
-import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
 
 public class Store extends ThemePanel {
     @SuppressWarnings("unused") private final mainFrame frame;
@@ -25,7 +21,6 @@ public class Store extends ThemePanel {
     private ArrayList<JPanel> gameCardsList;
     private JLabel titleLabel;
     private static final int CARD_GAP = 20;
-    private static final Map<String, ImageIcon> imageCache = new HashMap<>();
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public Store(mainFrame frame) {
@@ -41,26 +36,28 @@ public class Store extends ThemePanel {
             titleLabel = new JLabel("Game Store");
             FontManager.setFont(titleLabel, Font.BOLD, 40);
             add(titleLabel, BorderLayout.NORTH);
+            
+            // Initialize scrollPane
+            scrollPane = new JScrollPane();
 
             cardsPanel = new ThemePanel(new GridLayout(0, 3, CARD_GAP, CARD_GAP));
             cardsPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
             gameCardsList = new ArrayList<>();
             
-            // Load games using the existing utility method
+            // Load games using GameManager facade
             try {
-                java.util.List<Game> games = GameRepository.loadGames();
+                GameManager gameManager = GameManager.getInstance();
+                Collection<Game> games = gameManager.getAllGames();
 
                 if (games.isEmpty()) {
                     JLabel errorLabel = new JLabel("No games found. Could not load store data.");
-                    errorLabel.setForeground(Color.RED);
-                    errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                    cardsPanel.add(errorLabel);
+                    errorLabel.setForeground(LightModeToggle.getTextColor());
+                    add(errorLabel, BorderLayout.CENTER);
+                    return;
                 } else {
                     System.out.println("Successfully loaded " + games.size() + " games");
                     
-                    GameIterator iterator = new GameIterator(games);
-                    while (iterator.hasNext()) {
-                        Game game = iterator.next();
+                    for (Game game : games) {
                         ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
                         JPanel card = GameCardCreator.createGameCard(
                             game.getTitle(),
@@ -96,11 +93,11 @@ public class Store extends ThemePanel {
                     }
                 }
 
-                scrollPane = new JScrollPane(cardsPanel);
+                scrollPane.setViewportView(cardsPanel);
                 scrollPane.setBorder(BorderFactory.createEmptyBorder());
                 scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                scrollPane.getViewport().setOpaque(false);
                 add(scrollPane, BorderLayout.CENTER);
-                scrollPane.getViewport().setOpaque(false);   
         } catch (Exception e) {
             System.err.println("Error initializing Store panel: " + e.getMessage());
             e.printStackTrace();

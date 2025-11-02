@@ -16,13 +16,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONException;
 
 import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
 import com.mycompany.nocapgameslauncher.game_manager.Game;
-import com.mycompany.nocapgameslauncher.game_manager.GameMetadata;
-import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
+import com.mycompany.nocapgameslauncher.game_manager.GameManager;
 import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 
 public class databaseMegaquery extends JFrame {
@@ -164,14 +164,18 @@ public class databaseMegaquery extends JFrame {
             
     private void createGameMetadata(int gameId, String gameName, String gamePath, String imageUrl, String description) {
         try {
-            JSONObject game = new JSONObject();
-            game.put("gameID", gameId);
-            game.put("gameName", gameName);
-            game.put("gameURL", gamePath);
-            game.put("imageURL", imageUrl);
-            game.put("gameDescription", description);
-            gamesArray.put(game);
-        } catch (JSONException e) {
+            // Use GameManager facade to create and save the game
+            GameManager gameManager = GameManager.getInstance();
+            List<Game> games = new ArrayList<>(gameManager.getAllGames());
+            
+            // Create and add the new game
+            Game newGame = gameManager.createGame(gameName, description, imageUrl, gameId, gamePath);
+            games.add(newGame);
+            
+            // Save all games
+            gameManager.saveGames(games);
+            
+        } catch (Exception e) {
             logArea.append("Error creating game metadata: " + e.getMessage() + "\n");
         }
     }
@@ -180,20 +184,21 @@ public class databaseMegaquery extends JFrame {
         ArrayList<Game> games = new ArrayList<>();
         
         // Convert JSON array to List<Game>
+        GameManager gameManager = GameManager.getInstance();
         for (int i = 0; i < gamesArray.length(); i++) {
             JSONObject gameJson = gamesArray.getJSONObject(i);
-            Game game = new GameMetadata(
+            Game game = gameManager.createGame(
                 gameJson.getString("gameName"),
                 gameJson.optString("gameDescription", ""),
                 gameJson.optString("imageURL", ""),
-                i + 1,
+                gameJson.getInt("gameID"),
                 gameJson.optString("gameURL", "")
             );
             games.add(game);
         }
         
-        // Save using GameRepository
-        GameRepository.saveGames(games);
+        // Save using GameManager
+        gameManager.saveGames(games);
         logArea.append("Games saved to file\n");
     }
 
