@@ -5,16 +5,12 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Facade for the game_manager subsystem.
- * Provides simplified access to game loading, saving, and iteration.
- */
 public class GameManager {
     private static GameManager instance;
     
     private GameManager() {}
     
-    public static GameManager getInstance() {
+    public static synchronized GameManager getInstance() {
         if (instance == null) {
             instance = new GameManager();
         }
@@ -22,11 +18,14 @@ public class GameManager {
     }
     
     public List<Game> getAllGames() {
-        return GameRepository.loadGames();
+        List<Game> games = GameRepository.loadGames();
+        // Load stats for each game
+        games.forEach(Game::loadGameStats);
+        return games;
     }
     
     public GameIterator getGameIterator() {
-        return new GameIterator(GameRepository.loadGames());
+        return new GameIterator(getAllGames());
     }
 
     public Map<String, String> getGameDescriptions(InputStream gameDataStream) throws IOException {
@@ -38,18 +37,17 @@ public class GameManager {
     }
     
     public Game createGame(String title, String description, String imageUrl, int id, String gameUrl) {
-        return new GameMetadata(title, description, imageUrl, id, gameUrl);
+        Game game = new GameMetadata(title, description, imageUrl, id, gameUrl);
+        game.loadGameStats(); // Load any existing stats for this game
+        return game;
     }
     
     public Game getGameById(int gameId) {
-        GameIterator iterator = getGameIterator();
-        while (iterator.hasNext()) {
-            Game game = iterator.next();
-            if (game.getID() == gameId) {
-                return game;
-            }
+        Game game = GameRepository.getGameById(gameId);
+        if (game != null) {
+            game.loadGameStats();
         }
-        return null;
+        return game;
     }
     
     public int getGameCount() {

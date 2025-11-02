@@ -1,13 +1,16 @@
 {
-  "database": {
-    "DB_USER": "Admin"
-  },
   "ownedGameIds": [
+    1,
     2,
     4,
-    1,
     6
   ],
+  "gameStats": {
+    "6": {
+      "playCount": 4,
+      "lastPlayed": 1762104671988
+    }
+  },
   "userID": 6,
   "username": "safi",
   "password": "password"

@@ -4,6 +4,12 @@ public interface Game {
     int getID();
     String getTitle();
     String getDescription();
-    String getGameUrl();
     String getImageUrl();
+    String getGameUrl();
+
+    // User-Specific
+    int getPlayCount();
+    long getLastPlayed();
+    void incrementPlayCount();
+    void loadGameStats();
 }

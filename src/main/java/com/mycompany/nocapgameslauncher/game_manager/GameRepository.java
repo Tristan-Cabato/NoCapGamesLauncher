@@ -1,16 +1,61 @@
-// Create a new file: game_manager/GameRepository.java
 package com.mycompany.nocapgameslauncher.game_manager;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class GameRepository {
     private static final String GAMES_FILE = "src/main/resources/store_games.json";
+    
+    public static List<Game> loadGames() {
+        List<Game> games = new ArrayList<>();
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(GAMES_FILE)));
+            JSONArray gamesArray = new JSONArray(content);
+            
+            for (int i = 0; i < gamesArray.length(); i++) {
+                JSONObject gameJson = gamesArray.getJSONObject(i);
+                Game game = new GameMetadata(
+                    gameJson.getString("gameName"),
+                    gameJson.optString("gameDescription", ""),
+                    gameJson.optString("imageURL", ""),
+                    gameJson.getInt("gameID"),
+                    gameJson.optString("gameURL", "")
+                );
+                games.add(game);
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading games: " + e.getMessage());
+        }
+        return games;
+    }
+    
+    public static Game getGameById(int gameId) {
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(GAMES_FILE)));
+            JSONArray gamesArray = new JSONArray(content);
+            
+            for (int i = 0; i < gamesArray.length(); i++) {
+                JSONObject gameJson = gamesArray.getJSONObject(i);
+                if (gameJson.getInt("gameID") == gameId) {
+                    return new GameMetadata(
+                        gameJson.getString("gameName"),
+                        gameJson.optString("gameDescription", ""),
+                        gameJson.optString("imageURL", ""),
+                        gameJson.getInt("gameID"),
+                        gameJson.optString("gameURL", "")
+                    );
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error finding game: " + e.getMessage());
+        }
+        return null;
+    }
     
     public static void saveGames(List<Game> games) {
         try {
@@ -25,59 +70,9 @@ public class GameRepository {
                 gameJson.put("gameDescription", game.getDescription());
                 gamesArray.put(gameJson);
             }
-            
-            Files.createDirectories(Paths.get(GAMES_FILE).getParent());
-            Files.writeString(Paths.get(GAMES_FILE), gamesArray.toString(4));
+            Files.write(Paths.get(GAMES_FILE), gamesArray.toString(4).getBytes());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save games", e);
-        }
-    }
-    
-    public static List<Game> loadGames() {
-        try {
-            if (!Files.exists(Paths.get(GAMES_FILE))) {
-                return new ArrayList<>();
-            }
-            
-            String content = Files.readString(Paths.get(GAMES_FILE));
-            JSONArray gamesArray = new JSONArray(content);
-            List<Game> games = new ArrayList<>();
-            
-            for (int i = 0; i < gamesArray.length(); i++) {
-                JSONObject gameJson = gamesArray.getJSONObject(i);
-                String gameName = gameJson.getString("gameName");
-                String formattedName = com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting.formatGameName(gameName);
-                String imageUrl = gameJson.optString("imageURL", "");
-                
-                // Convert the path to be relative to the resources folder and fix spaces in filenames
-                if (!imageUrl.isEmpty()) {
-                    if (imageUrl.startsWith("src/main/resources/")) {
-                        imageUrl = imageUrl.substring("src/main/resources/".length());
-                    }
-                    // Replace spaces with underscores in the filename part of the path
-                    int lastSlash = imageUrl.lastIndexOf('/');
-                    if (lastSlash >= 0) {
-                        String path = imageUrl.substring(0, lastSlash + 1);
-                        String filename = imageUrl.substring(lastSlash + 1).replace(" ", "_");
-                        imageUrl = path + filename;
-                    } else {
-                        imageUrl = imageUrl.replace(" ", "_");
-                    }
-                } else {
-                    imageUrl = "ImageResources/" + gameName.toLowerCase() + ".jpg";
-                }
-                
-                games.add(new GameMetadata(
-                    formattedName,  // Use the formatted name for display
-                    gameJson.optString("gameDescription", ""),
-                    imageUrl,
-                    i + 1,
-                    gameJson.optString("gameURL", "")
-                ));
-            }
-            return games;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load games", e);
+            System.err.println("Error saving games: " + e.getMessage());
         }
     }
 }

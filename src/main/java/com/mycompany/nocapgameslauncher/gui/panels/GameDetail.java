@@ -7,6 +7,8 @@ import com.mycompany.nocapgameslauncher.userManager.UserGameManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 import com.mycompany.nocapgameslauncher.gui.components.sidebarCreator;
 import com.mycompany.nocapgameslauncher.game_manager.GameManager;
+import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
+import com.mycompany.nocapgameslauncher.game_manager.Game;
 
 import javax.swing.*;
 
@@ -14,6 +16,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.io.*;
+import java.text.SimpleDateFormat;
+
 import javax.swing.border.EmptyBorder;
 import org.json.*;
 
@@ -24,10 +28,12 @@ public class GameDetail extends ThemePanel {
     private final JScrollPane descriptionScrollPane;
     private final ThemeButton playButton;
     private final ThemeButton removeButton;
+    private final ThemeButton statsButton;
     private final JLabel gameImageLabel;
     private boolean userOwned;
     private static final ImageIcon DEFAULT_GAME_ICON;
 
+    private Game currentGame;
     private final Map<String, String> gameDescriptions;
     private int currentGameId = -1;
 
@@ -114,6 +120,12 @@ public class GameDetail extends ThemePanel {
         
         buttonPanel.add(playButton);
 
+        // Stats
+        statsButton = new ThemeButton("View Stats", false, false, null, true);
+        FontManager.setFont(statsButton, Font.BOLD, 16);
+        statsButton.addActionListener(_ -> showGameStats());
+        buttonPanel.add(statsButton);
+
         // Remove button
         removeButton = new ThemeButton("Remove from Library", false, false, null, true);
         FontManager.setFont(removeButton, Font.BOLD, 16);
@@ -199,40 +211,27 @@ public class GameDetail extends ThemePanel {
     }
     
     public void setGame(String gameTitle, Integer gameId) {
-        if (gameTitle == null) return;
+        if (gameTitle == null || gameId == null) return;
         
-        // Store the game ID for ownership check
-        int newGameId = (gameId != null) ? gameId : -1;
-        boolean gameChanged = (this.currentGameId != newGameId);
-        this.currentGameId = newGameId;
+        // Get the game instance from the manager
+        this.currentGame = GameManager.getInstance().getGameById(gameId);
+        if (this.currentGame == null) return;
         
-        System.out.println("Setting game: " + gameTitle + " with ID: " + this.currentGameId);
+        // Update the game ID
+        this.currentGameId = currentGame.getID();
         
-        // Try to get description from game data if we have an ID
+        // Get the game description
         String description = null;
-        if (this.currentGameId > 0) {
-            Map<String, String> gameDetails = resourceLoader.getGameById(this.currentGameId);
-            if (gameDetails != null) {
-                description = gameDetails.get("gameDescription");
-                System.out.println("Found game details: " + gameDetails);
-            }
+        Map<String, String> gameDetails = resourceLoader.getGameById(gameId);
+        if (gameDetails != null) {
+            description = gameDetails.get("gameDescription");
         }
         
-        // Update the game details with the found description or null
+        // Update the UI
         setGame(gameTitle, description);
         
-        // Then check ownership if needed
-        if (gameChanged || playButton == null) {
-            SwingUtilities.invokeLater(() -> {
-                checkIfOwned();
-                // Ensure the button text is updated
-                if (playButton != null) {
-                    playButton.setText(userOwned ? "Play Game" : "Add to Library");
-                    playButton.revalidate();
-                    playButton.repaint();
-                }
-            });
-        }
+        // Check ownership
+        checkIfOwned();
     }
 
     private Map<String, String> loadGameDescriptions() {
@@ -249,14 +248,29 @@ public class GameDetail extends ThemePanel {
 
     private void addToLibrary() {
         try {
-            UserGameData userGameData = UserGameData.loadForUser(
-                com.mycompany.nocapgameslauncher.database.DatabaseHandler.getCurrentUser()
-            );
+            String currentUser = DatabaseHandler.getCurrentUser();
+            if (currentUser == null) {
+                JOptionPane.showMessageDialog(this, "User not logged in", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Add the game to the user's library
+            UserGameData userGameData = UserGameData.loadForUser(currentUser);
             userGameData.addGame(currentGameId);
+            
+            // Update the UI
             userOwned = true;
             updateButtonStates();
+            
+            // Show success message
+            JOptionPane.showMessageDialog(
+                this,
+                "Game added to your library!",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            
         } catch (Exception e) {
-            System.err.println("Error adding game to library: " + e.getMessage());
             JOptionPane.showMessageDialog(
                 this,
                 "Failed to add game to library: " + e.getMessage(),
@@ -267,56 +281,85 @@ public class GameDetail extends ThemePanel {
     }
 
     private void launchGame() {
-        try {
-            // Get the game details from JSON to retrieve the gameURL
-            Map<String, String> gameDetails = resourceLoader.getGameById(currentGameId);
-            
-            if (gameDetails == null) {
-                JOptionPane.showMessageDialog(this, 
-                    "Game details not found", 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            String gameUrl = gameDetails.get("gameURL");
-            if (gameUrl == null || gameUrl.isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "Game executable path not found", 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            File file = new File(gameUrl);
-            if (file.exists()) {
-                Desktop.getDesktop().open(file);
+        if (currentGame == null) return;
+        
+        // Update play stats
+        currentGame.incrementPlayCount();
+        
+        // Run game launch in a separate thread
+        new Thread(() -> {
+            try {
+                // Get the game details from JSON to retrieve the gameURL
+                Map<String, String> gameDetails = resourceLoader.getGameById(currentGameId);
                 
-                JOptionPane optionPane = new JOptionPane(
-                    "Launching " + gameTitleLabel.getText() + "...", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                JDialog dialog = optionPane.createDialog("Game Launched");
-                dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-                dialog.setModal(false);
-                dialog.setVisible(true);
+                if (gameDetails == null) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(
+                            this, 
+                            "Game details not found", 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    });
+                    return;
+                }
+                
+                String gameUrl = gameDetails.get("gameURL");
+                if (gameUrl == null || gameUrl.isEmpty()) {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(
+                            this, 
+                            "Game executable path not found", 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    });
+                    return;
+                }
+                
+                File file = new File(gameUrl);
+                if (file.exists()) {
+                    // Launch the game
+                    Desktop.getDesktop().open(file);
+                    
+                    // Show success message
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane optionPane = new JOptionPane(
+                            "Launching " + currentGame.getTitle() + "...", 
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                        JDialog dialog = optionPane.createDialog("Game Launched");
+                        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+                        dialog.setModal(false);
+                        dialog.setVisible(true);
 
-                javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
-                    dialog.dispose();
+                        // Auto-close after 0.8 seconds
+                        new javax.swing.Timer(800, e -> {
+                            dialog.dispose();
+                            ((javax.swing.Timer)e.getSource()).stop();
+                        }).start();
+                    });
+                } else {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(
+                            this, 
+                            "Executable not found at: " + gameUrl, 
+                            "Error", 
+                            JOptionPane.ERROR_MESSAGE
+                        );
+                    });
+                }
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(
+                        this, 
+                        "Error launching game: " + e.getMessage(), 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE
+                    );
                 });
-                timer.setRepeats(false);
-                timer.start();
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "Executable not found at: " + gameUrl, 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
             }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error launching game: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-        }
+        }).start();
     }
 
     private void removeFromLibrary() {
@@ -361,11 +404,56 @@ public class GameDetail extends ThemePanel {
     }
 
     private void updateButtonStates() {
-        if (playButton != null) playButton.setText(userOwned ? "Play Game" : "Add to Library");
-        if (removeButton != null) {
-            if (userOwned) removeButton.setVisible(true);
-            else removeButton.setVisible(false);
+        if (playButton != null) {
+            playButton.setText(userOwned ? "Play Game" : "Add to Library");
         }
+        if (removeButton != null) {
+            removeButton.setVisible(userOwned);
+        }
+        if (statsButton != null) {
+            statsButton.setVisible(userOwned);
+        }
+    }
+
+    // In GameDetail.java, update the showGameStats method
+    private void showGameStats() {
+        if (currentGame == null) {
+            JOptionPane.showMessageDialog(
+                this,
+                "No game selected",
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+        
+        // Format the last played time
+        String lastPlayed = "Never";
+        if (currentGame.getLastPlayed() > 0) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            lastPlayed = sdf.format(new Date(currentGame.getLastPlayed()));
+        }
+        
+        // Format the stats message
+        String stats = String.format(
+            "<html><body style='width: 300px;'>" +
+            "<h2>Game Statistics</h2>" +
+            "<p><b>Title:</b> %s</p>" +
+            "<p><b>Times Played:</b> %d</p>" +
+            "<p><b>Last Played:</b> %s</p>" +
+            "</body></html>",
+            currentGame.getTitle(),
+            currentGame.getPlayCount(),
+            lastPlayed
+        );
+        
+        // Show the stats dialog
+        JOptionPane.showMessageDialog(
+            this,
+            stats,
+            "Game Statistics - " + currentGame.getTitle(),
+            JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
     @Override
