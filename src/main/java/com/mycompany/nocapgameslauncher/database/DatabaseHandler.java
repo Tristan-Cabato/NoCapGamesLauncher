@@ -9,6 +9,7 @@ import com.google.gson.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.ArrayList;
 
 import com.mycompany.nocapgameslauncher.gui.userManager.UserRepository;
 
@@ -193,6 +194,21 @@ public class DatabaseHandler {
                     }
                 }
             }
+        }
+    }
+
+    public static ArrayList<String> getAllUsers() {
+        String sql = "SELECT username FROM users";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            ArrayList<String> users = new ArrayList<>();
+            while (rs.next()) {
+                users.add(rs.getString("username"));
+            }
+            return users;
+        } catch (SQLException e) {
+            return null;
         }
     }
 }

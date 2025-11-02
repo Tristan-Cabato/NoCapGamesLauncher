@@ -3,32 +3,31 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
+import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
+import com.mycompany.nocapgameslauncher.gui.userManager.FriendsIterator;
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
 
 public class Friends extends ThemePanel {
-
     private JList<String> friendList;
     private DefaultListModel<String> listModel;
 
     public Friends(mainFrame frame) {
         super(new BorderLayout());
-        ArrayList<String> friendNames = loadFriendsFromFile("/friends.txt");
-
+        
+        // For a list style of showing users
         listModel = new DefaultListModel<>();
-        if (friendNames.isEmpty()) {
-            listModel.addElement("No friends available.");
+        
+        FriendsIterator friendsIterator = new FriendsIterator();
+        if (!friendsIterator.hasNext()) {
+            listModel.addElement("No users available.");
         } else {
-            for (String name : friendNames) {
-                listModel.addElement(name);
+            while (friendsIterator.hasNext()) {
+                listModel.addElement(friendsIterator.next());
             }
         }
 
-        // Create the JList and customize it
+        // Styling the list
         friendList = new JList<>(listModel);
         friendList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
@@ -40,39 +39,36 @@ public class Friends extends ThemePanel {
                 return c;
             }
         });
+        
+        /* "All Users" Label
+         Added Friends will be for later
+         */
+        JLabel userLabel = new JLabel("    All Users");
+        userLabel.setForeground(LightModeToggle.getTextColor());
+        FontManager.setFont(userLabel, Font.BOLD, 24);
+        add(userLabel, BorderLayout.NORTH);
 
         // Add the list to a scroll pane
         JScrollPane scrollPane = new JScrollPane(friendList);
         scrollPane.setBorder(BorderFactory.createLineBorder(LightModeToggle.getComponentColor()));
 
-        // Add the scroll pane to the panel
         add(scrollPane, BorderLayout.CENTER);
         updateTheme();
     }
 
-    private ArrayList<String> loadFriendsFromFile(String filename) {
-        ArrayList<String> friends = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Friends.class.getResourceAsStream(filename)))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    friends.add(line.trim());
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading friend list from " + filename + ": " + e.getMessage());
-        }
-        return friends;
-    }
-
     @Override
     public void updateTheme() {
-        super.updateTheme();
-        if (friendList != null) {
-            friendList.setBackground(LightModeToggle.getComponentColor());
-            friendList.setForeground(LightModeToggle.getTextColor());
-            friendList.setSelectionBackground(LightModeToggle.getComponentColor().brighter());
-            friendList.setSelectionForeground(LightModeToggle.getTextColor());
+        setBackground(LightModeToggle.getBackgroundColor());
+        friendList.setBackground(LightModeToggle.getComponentColor());
+        friendList.setForeground(LightModeToggle.getTextColor());
+        
+        // Update the "All Users" label color
+        Component[] components = getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JLabel) {
+                JLabel label = (JLabel) comp;
+                label.setForeground(LightModeToggle.getTextColor());
+            }
         }
     }
 }
