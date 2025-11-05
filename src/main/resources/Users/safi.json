@@ -1,17 +1,15 @@
 {
   "ownedGameIds": [
     1,
-    2,
-    4,
     6
   ],
   "gameStats": {
     "6": {
-      "playCount": 4,
-      "lastPlayed": 1762104671988
+      "playCount": 2,
+      "lastPlayed": 1762104953093
     }
   },
-  "userID": 6,
+  "userID": 3,
   "username": "safi",
   "password": "password"
 }

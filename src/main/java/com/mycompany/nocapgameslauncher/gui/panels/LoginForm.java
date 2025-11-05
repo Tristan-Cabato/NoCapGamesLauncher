@@ -3,7 +3,7 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
-import com.mycompany.nocapgameslauncher.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
 import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 
 import javax.swing.*;

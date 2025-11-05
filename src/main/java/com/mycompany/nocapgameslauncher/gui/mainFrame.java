@@ -4,7 +4,8 @@ import com.mycompany.nocapgameslauncher.gui.components.sidebarCreator;
 import com.mycompany.nocapgameslauncher.gui.components.HeaderCreator;
 import com.mycompany.nocapgameslauncher.gui.panels.*;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemeManager;
-import com.mycompany.nocapgameslauncher.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
+
 import javax.swing.*;
 import java.awt.*;
 

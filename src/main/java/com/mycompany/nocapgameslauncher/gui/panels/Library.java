@@ -251,23 +251,4 @@ public class Library extends ThemePanel{
             card.removeAll();
         }
     }
-    
-    private void cleanupComponents(Container container) {
-        for (Component comp : container.getComponents()) {
-            // Clean up any image resources
-            if (comp instanceof JLabel) {
-                Icon icon = ((JLabel)comp).getIcon();
-                if (icon instanceof ImageIcon) {
-                    Image image = ((ImageIcon)icon).getImage();
-                    if (image != null) {
-                        image.flush();
-                    }
-                }
-            }
-            // Recursively clean up child components
-            if (comp instanceof Container) {
-                cleanupComponents((Container)comp);
-            }
-        }
-    }
 }

@@ -2,7 +2,7 @@ package com.mycompany.nocapgameslauncher.gui.components;
 
 import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
-import com.mycompany.nocapgameslauncher.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
+import com.mycompany.nocapgameslauncher.iterator.GameIterator;
+
 public class GameManager {
     private static GameManager instance;
     

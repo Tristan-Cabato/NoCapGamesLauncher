@@ -3,7 +3,7 @@ package com.mycompany.nocapgameslauncher;
 
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.gui.panels.LoginForm;
-import com.mycompany.nocapgameslauncher.userManager.SessionIterator;
+import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
 import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 import javax.swing.*;
 

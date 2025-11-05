@@ -10,6 +10,7 @@ import java.util.*;
 public class UserGameData {
     private final Set<Integer> ownedGameIds;
     private final Map<Integer, GameStats> gameStats;
+    private final Set<Integer> friendList;
     private int userID;
     private String username;
     private String password;
@@ -19,6 +20,7 @@ public class UserGameData {
         this.username = username;
         this.ownedGameIds = new HashSet<>();
         this.gameStats = new HashMap<>();
+        this.friendList = new HashSet<>();
         loadFromFile();
     }
 
@@ -51,6 +53,10 @@ public class UserGameData {
         return new HashSet<>(ownedGameIds);
     }
 
+    public Set<Integer> getFriendList() {
+        return friendList != null ? new HashSet<>(friendList) : new HashSet<>();
+    }
+
     // Game Management
     public void addGame(int gameId) {
         if (ownedGameIds.add(gameId)) {
@@ -67,6 +73,22 @@ public class UserGameData {
 
     public boolean ownsGame(int gameId) {
         return ownedGameIds.contains(gameId);
+    }
+    
+    // Friend Management
+    public void addFriend(int friendId) {
+        if (friendList.add(friendId)) {
+            saveToFile();
+        }
+    }
+
+    public void removeFriend(int friendId) {
+        if (friendList.remove(friendId)) 
+            saveToFile();
+    }
+
+    public boolean hasFriend(int friendId) {
+        return friendList.contains(friendId);
     }
 
     // Game Statistics

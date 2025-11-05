@@ -1,7 +1,9 @@
-package com.mycompany.nocapgameslauncher.game_manager;
+package com.mycompany.nocapgameslauncher.iterator;
 
 import java.util.Iterator;
 import java.util.List;
+
+import com.mycompany.nocapgameslauncher.game_manager.Game;
 
 public class GameIterator implements Iterator<Game> {
     private final List<Game> games;
