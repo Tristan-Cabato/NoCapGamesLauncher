@@ -10,7 +10,7 @@ import java.util.*;
 public class UserGameData {
     private final Set<Integer> ownedGameIds;
     private final Map<Integer, GameStats> gameStats;
-    private final Set<Integer> friendList;
+    private Set<Integer> friendList;
     private int userID;
     private String username;
     private String password;
@@ -54,7 +54,8 @@ public class UserGameData {
     }
 
     public Set<Integer> getFriendList() {
-        return friendList != null ? new HashSet<>(friendList) : new HashSet<>();
+        ensureFriendListInitialized();
+        return new HashSet<>(friendList);
     }
 
     // Game Management
@@ -76,19 +77,28 @@ public class UserGameData {
     }
     
     // Friend Management
+    private void ensureFriendListInitialized() {
+        if (friendList == null) {
+            friendList = new HashSet<>();
+            saveToFile();
+        }
+    }
+
     public void addFriend(int friendId) {
+        ensureFriendListInitialized();
         if (friendList.add(friendId)) {
             saveToFile();
         }
     }
 
     public void removeFriend(int friendId) {
-        if (friendList.remove(friendId)) 
+        if (friendList != null && friendList.remove(friendId)) {
             saveToFile();
+        }
     }
 
     public boolean hasFriend(int friendId) {
-        return friendList.contains(friendId);
+        return friendList != null && friendList.contains(friendId);
     }
 
     // Game Statistics
@@ -126,6 +136,14 @@ public class UserGameData {
                 if (userData.containsKey("ownedGameIds")) {
                     List<Number> gameIds = (List<Number>) userData.get("ownedGameIds");
                     gameIds.forEach(id -> ownedGameIds.add(id.intValue()));
+                }
+
+                // Load friend list
+                if (userData.containsKey("friendList")) {
+                    List<Number> friendIds = (List<Number>) userData.get("friendList");
+                    friendIds.forEach(id -> friendList.add(id.intValue()));
+                } else {
+                    friendList = new HashSet<>();
                 }
 
                 // Load game stats
@@ -178,6 +196,9 @@ public class UserGameData {
 
             // Save owned games
             userData.put("ownedGameIds", new ArrayList<>(ownedGameIds));
+            
+            // Save friend list
+            userData.put("friendList", new ArrayList<>(friendList));
             
             // Save game stats
             Map<String, Map<String, Object>> statsMap = new HashMap<>();
