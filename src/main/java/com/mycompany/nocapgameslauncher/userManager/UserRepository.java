@@ -2,23 +2,32 @@ package com.mycompany.nocapgameslauncher.userManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
+
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
 
 public class UserRepository {
-    private static final String USERS_DIR = "src/main/resources/Users/";
+    private static final String USERS_DIR = resourceLoader.RESOURCE_DIRECTORY + "Users/";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final String ADMIN_USER = "Admin";
     
     static {
         try {
             Files.createDirectories(Paths.get(USERS_DIR));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error creating Users directory: " + e.getMessage());
         }
     }
     
     public void saveUser(UserGameData userData) {
+        // Skip saving admin user data or invalid usernames
+        if (userData == null || userData.getUsername() == null || 
+            userData.getUsername().trim().isEmpty() ||
+            userData.getUsername().equalsIgnoreCase(ADMIN_USER)) {
+            // Ensure we don't create Admin.json by returning early
+            return;
+        }
         String filename = USERS_DIR + userData.getUsername() + ".json";
         try {
             // Ensure parent directories exist
@@ -36,11 +45,14 @@ public class UserRepository {
             }
         } catch (IOException e) {
             System.err.println("Error saving user data: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     
     public UserGameData loadUser(String username) {
+        if (username == null || username.equalsIgnoreCase(ADMIN_USER)) {
+            return null;
+        }
+        
         String filename = USERS_DIR + username + ".json";
         try {
             File file = new File(filename);
@@ -61,6 +73,9 @@ public class UserRepository {
     }
     
     public boolean userExists(String username) {
+        if (username == null || username.equalsIgnoreCase(ADMIN_USER)) {
+            return false;
+        }
         File file = new File(USERS_DIR + username + ".json");
         return file.exists() && file.getName().equals(username + ".json");
     }
@@ -83,8 +98,6 @@ public class UserRepository {
                     return userData;
                 }
             } catch (Exception e) {
-                // Skip invalid user files
-                continue;
             }
         }
         return null;

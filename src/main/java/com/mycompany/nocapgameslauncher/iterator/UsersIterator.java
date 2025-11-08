@@ -12,7 +12,7 @@ public class UsersIterator implements Iterator<String> {
 
     public UsersIterator() {
         this.users = database.getAllUsers();
-        this.currentIndex = 1; // Skip Admin
+        this.currentIndex = 0;
     }
 
     @Override
@@ -23,8 +23,16 @@ public class UsersIterator implements Iterator<String> {
     @Override
     public String next() {
         if (!hasNext()) {
-            throw new IndexOutOfBoundsException("No more friends");
+            throw new IndexOutOfBoundsException("No more users");
         }
-        return users.get(currentIndex++);
+        
+        String username = users.get(currentIndex++);
+        
+        // Skip Admin user
+        while (username.equals("Admin") && hasNext()) {
+            username = users.get(currentIndex++);
+        }
+        
+        return username;
     }
 }

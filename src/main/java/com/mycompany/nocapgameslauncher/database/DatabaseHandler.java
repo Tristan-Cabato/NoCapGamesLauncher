@@ -94,12 +94,10 @@ public class DatabaseHandler {
                             userRepo.saveUser(userData);
                         }
                     }
-                    
                     // Set the actual username from database
                     setCurrentUser(actualUsername);
                     return true;
-                }
-                return false;
+                } return false;
             }
         }
     }
@@ -198,7 +196,6 @@ public class DatabaseHandler {
             }
         }
     }
-
     public ArrayList<String> getAllUsers() {
         String sql = "SELECT username FROM users";
         try (Connection conn = getConnection();

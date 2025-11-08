@@ -178,8 +178,11 @@ public class UserGameData {
     private void saveToFile() {
         try {
             String currentUser = DatabaseHandler.getCurrentUser();
-            if (currentUser == null || currentUser.trim().isEmpty()) {
-                throw new IllegalStateException("No user is currently logged in.");
+            DatabaseHandler dbHandler = DatabaseHandler.getInstance();
+            if (currentUser == null || currentUser.trim().isEmpty() || 
+                currentUser.equalsIgnoreCase(dbHandler.DB_USER)) {
+                // Skip saving for admin or invalid users
+                return;
             }
 
             String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";

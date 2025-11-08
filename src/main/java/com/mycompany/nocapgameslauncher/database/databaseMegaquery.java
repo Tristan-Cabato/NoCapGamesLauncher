@@ -180,32 +180,44 @@ public class databaseMegaquery extends JFrame {
     
     private void saveGamesToFile() {
         try (Connection conn = database.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM gameData")) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM gameData")) {
             
             List<Game> games = new ArrayList<>();
             GameManager gm = GameManager.getInstance();
+            String currentUser = DatabaseHandler.getCurrentUser();
             
-            while (rs.next()) {
-                int id = rs.getInt("gameID");
-                String name = rs.getString("gameName");
-                String desc = rs.getString("gameDescription");
-                String url = rs.getString("gameURL");
-                String img = rs.getString("imageURL");
+            try {
+                // Temporarily set current user to null to prevent stats loading
+                if (currentUser != null && currentUser.equals("Admin")) {
+                    DatabaseHandler.setCurrentUser(null);
+                }
                 
-                Game game = gm.createGame(
-                    name != null ? name : "", 
-                    desc != null ? desc : "", 
-                    img != null ? img : "", 
-                    id, 
-                    url != null ? url : ""
-                );
-                games.add(game);
+                while (rs.next()) {
+                    int id = rs.getInt("gameID");
+                    String name = rs.getString("gameName");
+                    String desc = rs.getString("gameDescription");
+                    String url = rs.getString("gameURL");
+                    String img = rs.getString("imageURL");
+                    
+                    Game game = gm.createGame(
+                        name != null ? name : "", 
+                        desc != null ? desc : "", 
+                        img != null ? img : "", 
+                        id, 
+                        url != null ? url : ""
+                    );
+                    games.add(game);
+                }
+                
+                gm.saveGames(games);
+                logArea.append("Successfully saved " + games.size() + " games from database to store_games.json\n");
+                
+            } finally {
+                if (currentUser != null) {
+                    DatabaseHandler.setCurrentUser(currentUser);
+                }
             }
-            
-            // Save the games to the JSON file
-            gm.saveGames(games);
-            logArea.append("Successfully saved " + games.size() + " games from database to store_games.json\n");
             
         } catch (SQLException e) {
             logArea.append("Error saving games: " + e.getMessage() + "\n");

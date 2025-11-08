@@ -3,6 +3,7 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemeManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
+import com.mycompany.nocapgameslauncher.gui.utilities.ThemeButton;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.iterator.UsersIterator;
 import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
@@ -28,6 +29,7 @@ public class Friends extends ThemePanel {
     private String currentUsername;
     private Set<String> friendsSet;
     private final mainFrame frame;
+    private JLabel titleLabel;
 
     public Friends(mainFrame frame) {
         super(new BorderLayout());
@@ -65,7 +67,7 @@ public class Friends extends ThemePanel {
         }
 
         // Create title
-        JLabel titleLabel = new JLabel("Friends");
+        titleLabel = new JLabel("Friends");
         FontManager.setFont(titleLabel, Font.BOLD, 24);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         add(titleLabel, BorderLayout.NORTH);
@@ -89,10 +91,6 @@ public class Friends extends ThemePanel {
     }
 
     private void loadAndDisplayUsers() {
-        // Always get the current user from session
-        UserMemento currentMemento = SessionIterator.getCurrentMemento();
-        currentUsername = currentMemento != null ? currentMemento.getUsername() : "";
-        
         usersPanel.removeAll();
 
         // Add current user's friends first
@@ -146,25 +144,25 @@ public class Friends extends ThemePanel {
         boolean isFriend = friendsSet.contains(username);
 
         // Main panel for the user
-        JPanel userPanel = new JPanel(new BorderLayout(10, 0));
-        userPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(LightModeToggle.getComponentColor().darker(), 1),
-            BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
-        userPanel.setOpaque(true);
-        userPanel.setBackground(LightModeToggle.getComponentColor());
+        ThemePanel userPanel = new ThemePanel(new BorderLayout(10, 0));
+        userPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        userPanel.setBackground(isFriend ? LightModeToggle.getComponentColor() : LightModeToggle.getBackgroundColor());
 
         // Username label
         JLabel nameLabel = new JLabel(username);
         FontManager.setFont(nameLabel, Font.BOLD, 16);
-        nameLabel.setForeground(LightModeToggle.getTextColor());
+        ThemeManager.addComponent(new ThemeManager.Themeable() {
+            @Override
+            public void updateTheme() {
+                nameLabel.setForeground(LightModeToggle.getTextColor());
+            }
+        });
 
         // Dropdown button for games
-        JButton gamesButton = new JButton("Show Games");
-        gamesButton.setFocusPainted(false);
-        gamesButton.setContentAreaFilled(false);
+        ThemeButton gamesButton = new ThemeButton("Show Games", false, true, LightModeToggle.getComponentColor(), false);
         gamesButton.setBorderPainted(false);
-        gamesButton.setForeground(LightModeToggle.getTextColor());
+        gamesButton.setContentAreaFilled(false);
+        gamesButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Panel for games dropdown
         JPanel gamesPanel = new JPanel();
@@ -185,12 +183,17 @@ public class Friends extends ThemePanel {
         });
 
         // Add/remove friend button
-        JButton friendButton = new JButton(isFriend ? "Remove Friend" : "Add Friend");
-        friendButton.setFocusPainted(false);
+        ThemeButton friendButton = new ThemeButton(
+            isFriend ? "Remove Friend" : "Add Friend",
+            false,
+            true,
+            Color.WHITE,
+            true
+        );
         friendButton.setBackground(isFriend ? new Color(255, 100, 100) : new Color(100, 200, 100));
-        friendButton.setForeground(Color.WHITE);
         friendButton.setOpaque(true);
         friendButton.setBorderPainted(false);
+        friendButton.setForeground(Color.WHITE);
 
         friendButton.addActionListener(e -> {
             toggleFriendStatus(username, friendButton);
@@ -233,6 +236,15 @@ public class Friends extends ThemePanel {
         if (targetUser == null || targetUser.getOwnedGameIds() == null || targetUser.getOwnedGameIds().isEmpty()) {
             JLabel noGamesLabel = new JLabel("  No games in library");
             noGamesLabel.setForeground(LightModeToggle.getTextColor().darker());
+            
+            // Register for theme updates
+            ThemeManager.addComponent(new ThemeManager.Themeable() {
+                @Override
+                public void updateTheme() {
+                    noGamesLabel.setForeground(LightModeToggle.getTextColor().darker());
+                }
+            });
+            
             gamesPanel.add(noGamesLabel);
             return;
         }
@@ -250,9 +262,22 @@ public class Friends extends ThemePanel {
                 JLabel gameLabel = new JLabel("  • " + gameData.title);
                 gameLabel.setForeground(LightModeToggle.getTextColor());
                 gameLabel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+                
+                // Register the label to update with theme changes
+                ThemeManager.addComponent(new ThemeManager.Themeable() {
+                    @Override
+                    public void updateTheme() {
+                        gameLabel.setForeground(LightModeToggle.getTextColor());
+                    }
+                });
+                
                 gamesPanel.add(gameLabel);
             }
         }
+        
+        // Make sure the panel updates
+        gamesPanel.revalidate();
+        gamesPanel.repaint();
     }
 
     private void toggleFriendStatus(String username, JButton friendButton) {
@@ -270,12 +295,11 @@ public class Friends extends ThemePanel {
             // Find target user
             UsersIterator usersIterator = new UsersIterator();
             UserGameData targetUser = null;
-            final String targetUsername = username; // Make final for lambda
             
             while (usersIterator.hasNext()) {
                 String iterUsername = usersIterator.next();
-                if (iterUsername.equals(targetUsername)) {
-                    targetUser = userRepo.loadUser(targetUsername);
+                if (iterUsername.equals(username)) {
+                    targetUser = userRepo.loadUser(username);
                     break;
                 }
             }
@@ -284,100 +308,94 @@ public class Friends extends ThemePanel {
                 throw new Exception("Target user not found");
             }
 
+            boolean isNowFriend;
             if (friendsSet.contains(username)) {
-                // Remove friend using the proper method
+                // Remove friend
                 currentUser.removeFriend(targetUser.getUserID());
-                userRepo.saveUser(currentUser);
                 friendsSet.remove(username);
-                friendButton.setText("Add Friend");
-                friendButton.setBackground(new Color(100, 200, 100));
-                friendButton.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        friendButton.setBackground(new Color(150, 250, 150));
-                    }
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        friendButton.setBackground(new Color(100, 200, 100));
-                    }
-                });
+                isNowFriend = false;
             } else {
-                // Add friend using the proper method
+                // Add friend
                 currentUser.addFriend(targetUser.getUserID());
-                userRepo.saveUser(currentUser);
                 friendsSet.add(username);
-                friendButton.setText("Remove Friend");
-                friendButton.setBackground(new Color(255, 100, 100));
-                friendButton.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        friendButton.setBackground(new Color(255, 150, 150));
-                    }
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        friendButton.setBackground(new Color(255, 100, 100));
-                    }
-                });
+                isNowFriend = true;
             }
-            loadAndDisplayUsers();
+            userRepo.saveUser(currentUser);
+
+            // Update button appearance
+            friendButton.setText(isNowFriend ? "Remove Friend" : "Add Friend");
+            friendButton.setBackground(isNowFriend ? new Color(255, 100, 100) : new Color(100, 200, 100));
+            friendButton.setForeground(Color.WHITE);
+
+            // Update the parent panel
+            JPanel userPanel = (JPanel) friendButton.getParent().getParent();
+            userPanel.setBackground(isNowFriend 
+                ? LightModeToggle.getComponentColor().brighter() 
+                : LightModeToggle.getComponentColor());
+            
+            // Force theme update
+            ThemeManager.updateTheme();
+            
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Failed to update friend status: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-        } loadAndDisplayUsers();
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     @Override
     public void updateTheme() {
-        // Update the main panel
-        setBackground(LightModeToggle.getBackgroundColor());
+        super.updateTheme(); // Let ThemePanel handle the basics
         
-        // Update scroll pane if it exists
+        // Set the main panel's background
+        setBackground(LightModeToggle.getComponentColor());
+
+        if (titleLabel != null) {
+            titleLabel.setForeground(LightModeToggle.getTextColor());
+        }
+        
         if (scrollPane != null) {
-            scrollPane.setBackground(LightModeToggle.getBackgroundColor());
-            scrollPane.getViewport().setBackground(LightModeToggle.getBackgroundColor());
+            scrollPane.setBackground(LightModeToggle.getComponentColor());
+            scrollPane.getViewport().setBackground(LightModeToggle.getComponentColor());
             scrollPane.setBorder(BorderFactory.createLineBorder(LightModeToggle.getComponentColor().darker()));
         }
         
-        // Update users panel
         if (usersPanel != null) {
-            usersPanel.setBackground(LightModeToggle.getBackgroundColor());
+            usersPanel.setBackground(LightModeToggle.getComponentColor());
             
-            // Update all user panels
             for (Component comp : usersPanel.getComponents()) {
                 if (comp instanceof JPanel) {
                     JPanel userPanel = (JPanel) comp;
-                    userPanel.setBackground(LightModeToggle.getComponentColor());
-                    userPanel.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(LightModeToggle.getComponentColor().darker(), 1),
-                        BorderFactory.createEmptyBorder(10, 15, 10, 15)
-                    ));
+                    boolean isFriend = friendsSet.stream()
+                        .anyMatch(name -> {
+                            for (Component c : userPanel.getComponents()) {
+                                if (c instanceof JLabel && ((JLabel) c).getText().equals(name)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        });
                     
-                    // Update all components in the user panel
-                    updateComponentTheme(userPanel);
+                    userPanel.setBackground(isFriend 
+                        ? LightModeToggle.getComponentColor().brighter() 
+                        : LightModeToggle.getComponentColor());
+                    
+                    // Update friend button colors
+                    for (Component c : userPanel.getComponents()) {
+                        if (c instanceof JButton) {
+                            JButton button = (JButton) c;
+                            if (button.getText().equals("Remove Friend")) {
+                                button.setBackground(new Color(255, 100, 100)); // Red for remove
+                                button.setForeground(Color.WHITE);
+                                button.setOpaque(true);
+                            } else if (button.getText().equals("Add Friend")) {
+                                button.setBackground(new Color(100, 200, 100)); // Green for add
+                                button.setForeground(Color.WHITE);
+                                button.setOpaque(true);
+                            }
+                        }
+                    }
                 }
-            }
-        }
-        
-        // Force a repaint
-        revalidate();
-        repaint();
-    }
-    
-    private void updateComponentTheme(Container container) {
-        for (Component comp : container.getComponents()) {
-            if (comp instanceof JButton button) {
-                button.setBackground(LightModeToggle.getComponentColor());
-                button.setForeground(LightModeToggle.getTextColor());
-            } else if (comp instanceof JLabel label) {
-                label.setForeground(LightModeToggle.getTextColor());
-            } else if (comp instanceof JComponent jcomp) {
-                jcomp.setBackground(LightModeToggle.getBackgroundColor());
-                jcomp.setForeground(LightModeToggle.getTextColor());
-            } else if (comp instanceof JPanel panel) {
-                panel.setOpaque(false);
-                updateComponentTheme(panel);
             }
         }
     }

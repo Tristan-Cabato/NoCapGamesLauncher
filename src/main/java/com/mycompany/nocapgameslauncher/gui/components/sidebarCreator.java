@@ -47,6 +47,18 @@ public class sidebarCreator {
             public void updateTheme() {
                 setBackground(LightModeToggle.getSidebarColor());
                 setForeground(LightModeToggle.getTextColor());
+                // Force update all components
+                for (Component comp : getComponents()) {
+                    if (comp instanceof JLabel) {
+                        comp.setForeground(LightModeToggle.getTextColor());
+                    } else if (comp instanceof JPanel) {
+                        for (Component child : ((JPanel)comp).getComponents()) {
+                            if (child instanceof JLabel) {
+                                child.setForeground(LightModeToggle.getTextColor());
+                            }
+                        }
+                    }
+                }
             }
         };
         ownedGamesPanel.setLayout(new BoxLayout(ownedGamesPanel, BoxLayout.Y_AXIS));
@@ -63,8 +75,11 @@ public class sidebarCreator {
         if (gameIdIterator.getGameCount() == 0) {
             JLabel noGamesLabel = new JLabel("No games available.");
             noGamesLabel.setForeground(LightModeToggle.getTextColor());
-            noGamesLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-            ownedGamesPanel.add(noGamesLabel);
+            FontManager.setFont(noGamesLabel, Font.PLAIN, 12);
+            JPanel wrapper = new ThemePanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+            wrapper.setOpaque(false);
+            wrapper.add(noGamesLabel);
+            ownedGamesPanel.add(wrapper);
         } else {
             while (gameIdIterator.hasNext()) {
                 int gameId = gameIdIterator.next();

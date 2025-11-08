@@ -1,7 +1,7 @@
 {
-  "rememberMe": false,
-  "username": "",
-  "password": "",
-  "lastPanel": "",
-  "themeState": ""
+  "rememberMe": true,
+  "username": "safi",
+  "password": "password",
+  "lastPanel": "LIBRARY",
+  "themeState": "DARK"
 }

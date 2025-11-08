@@ -167,6 +167,12 @@ public class Library extends ThemePanel{
         }
         if (cardsPanel != null) {
             cardsPanel.updateTheme();
+            // Force update all components in cardsPanel
+            for (Component comp : cardsPanel.getComponents()) {
+                if (comp instanceof JLabel) {
+                    comp.setForeground(LightModeToggle.getTextColor());
+                }
+            }
         }
     }
 

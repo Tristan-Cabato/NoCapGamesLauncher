@@ -1,8 +1,17 @@
 {
-  "ownedGameIds": [],
-  "gameStats": {},
+  "ownedGameIds": [
+    2,
+    4,
+    13
+  ],
+  "gameStats": {
+    "4": {
+      "playCount": 1,
+      "lastPlayed": 1762640341600
+    }
+  },
   "friendList": [],
-  "userID": 4.0,
+  "userID": 3,
   "username": "safi",
   "password": "password"
 }
