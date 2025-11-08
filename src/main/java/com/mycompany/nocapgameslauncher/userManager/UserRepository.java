@@ -60,14 +60,10 @@ public class UserRepository {
                 return null;
             }
             
-            try (Reader reader = new FileReader(file)) {
-                UserGameData data = gson.fromJson(reader, UserGameData.class);
-                if (data != null && !data.getUsername().equals(username)) {
-                    return null;
-                }
-                return data;
-            }
-        } catch (IOException e) {
+            // Important: instantiate via constructor so UserGameData.loadFromFile() runs.
+            // This guarantees userID and friendList are properly initialized.
+            return new UserGameData(username);
+        } catch (Exception e) {
             return null;
         }
     }
@@ -92,12 +88,17 @@ public class UserRepository {
         }
         
         for (File userFile : userFiles) {
-            try (Reader reader = new FileReader(userFile)) {
-                UserGameData userData = gson.fromJson(reader, UserGameData.class);
+            try {
+                String fileName = userFile.getName();
+                if (!fileName.endsWith(".json")) continue;
+                String username = fileName.substring(0, fileName.length() - 5);
+                
+                UserGameData userData = loadUser(username); // use loadUser so loadFromFile runs
                 if (userData != null && userData.getUserID() == userId) {
                     return userData;
                 }
             } catch (Exception e) {
+                // ignore malformed files but continue searching
             }
         }
         return null;

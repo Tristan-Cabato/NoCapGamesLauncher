@@ -117,10 +117,13 @@ public class UserGameData {
             String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + username + ".json";
             File userFile = new File(userJsonPath);
             
+            // Ensure collections are initialized
+            if (friendList == null) friendList = new HashSet<>();
+            this.ownedGameIds.clear();
+            this.gameStats.clear();
+
             if (!userFile.exists()) {
                 // If file doesn't exist, initialize with empty data and save it
-                this.ownedGameIds.clear();
-                this.gameStats.clear();
                 this.friendList.clear();
                 saveToFile();  // This will create the file with empty data
                 return;
@@ -132,16 +135,47 @@ public class UserGameData {
                     return;
                 }
 
+                // Load userID if present (IMPORTANT: load IDs so they don't default to 0)
+                if (userData.containsKey("userID")) {
+                    Object uidObj = userData.get("userID");
+                    if (uidObj instanceof Number) {
+                        this.userID = ((Number) uidObj).intValue();
+                    } else {
+                        try {
+                            this.userID = Integer.parseInt(String.valueOf(uidObj));
+                        } catch (NumberFormatException ex) {
+                            // leave userID as default (0) if not parseable
+                        }
+                    }
+                }
+
                 // Load owned games
                 if (userData.containsKey("ownedGameIds")) {
-                    List<Number> gameIds = (List<Number>) userData.get("ownedGameIds");
-                    gameIds.forEach(id -> ownedGameIds.add(id.intValue()));
+                    List<?> gameIdsRaw = (List<?>) userData.get("ownedGameIds");
+                    for (Object idObj : gameIdsRaw) {
+                        if (idObj instanceof Number) {
+                            ownedGameIds.add(((Number) idObj).intValue());
+                        } else {
+                            try {
+                                ownedGameIds.add(Integer.parseInt(String.valueOf(idObj)));
+                            } catch (NumberFormatException ignore) {}
+                        }
+                    }
                 }
 
                 // Load friend list
+                friendList = new HashSet<>(); // reset and populate
                 if (userData.containsKey("friendList")) {
-                    List<Number> friendIds = (List<Number>) userData.get("friendList");
-                    friendIds.forEach(id -> friendList.add(id.intValue()));
+                    List<?> friendIdsRaw = (List<?>) userData.get("friendList");
+                    for (Object idObj : friendIdsRaw) {
+                        if (idObj instanceof Number) {
+                            friendList.add(((Number) idObj).intValue());
+                        } else {
+                            try {
+                                friendList.add(Integer.parseInt(String.valueOf(idObj)));
+                            } catch (NumberFormatException ignore) {}
+                        }
+                    }
                 } else {
                     friendList = new HashSet<>();
                 }
@@ -150,15 +184,21 @@ public class UserGameData {
                 if (userData.containsKey("gameStats")) {
                     Map<String, Map<String, Number>> statsMap = 
                         (Map<String, Map<String, Number>>) userData.get("gameStats");
-                    statsMap.forEach((gameId, stats) -> {
-                        gameStats.put(
-                            Integer.parseInt(gameId),
-                            new GameStats(
-                                stats.get("playCount").intValue(),
-                                stats.get("lastPlayed").longValue()
-                            )
-                        );
-                    });
+                    if (statsMap != null) {
+                        statsMap.forEach((gameId, stats) -> {
+                            try {
+                                gameStats.put(
+                                    Integer.parseInt(gameId),
+                                    new GameStats(
+                                        stats.get("playCount").intValue(),
+                                        stats.get("lastPlayed").longValue()
+                                    )
+                                );
+                            } catch (Exception ex) {
+                                // skip malformed entries
+                            }
+                        });
+                    }
                 }
             }
         } catch (Exception e) {
@@ -166,7 +206,7 @@ public class UserGameData {
             // Initialize with empty data if there's an error
             this.ownedGameIds.clear();
             this.gameStats.clear();
-            this.friendList.clear();
+            this.friendList = new HashSet<>();
         }
     }
 

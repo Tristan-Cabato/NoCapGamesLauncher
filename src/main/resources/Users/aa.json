@@ -1,8 +1,13 @@
 {
-  "ownedGameIds": [],
+  "ownedGameIds": [
+    1,
+    3,
+    4
+  ],
   "gameStats": {},
-  "friendList": [],
-  "userID": 3.0,
-  "username": "aa",
-  "password": "AdDU123"
+  "friendList": [
+    4
+  ],
+  "userID": 3,
+  "username": "aa"
 }

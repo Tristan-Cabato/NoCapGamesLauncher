@@ -13,6 +13,7 @@
         - FriendList is now saved in the json file
         - Friends' games are now visible
         - Add/Remove friends now works
+        - Waaaaaaayyyyy too many edge cases I didn't even know existed.
 
 # Next Agenda
     - The insane overhaul: JavaFX, Code Cleanup
@@ -59,3 +60,5 @@
         Friends.java
     /userManager
         UserGameData.java
+
+    God oh God please make this work. The Friends panel gets freaky randomly.

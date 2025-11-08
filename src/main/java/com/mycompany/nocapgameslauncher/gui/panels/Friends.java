@@ -296,8 +296,8 @@ public class Friends extends ThemePanel {
         gamesPanel.repaint();
     }
 
-    private void toggleFriendStatus(String username, JButton friendButton) {
-        if (currentUsername.isEmpty()) {
+    private void toggleFriendStatus(String targetUsername, JButton friendButton) {
+        if (currentUsername == null || currentUsername.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please log in to manage friends.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -310,50 +310,54 @@ public class Friends extends ThemePanel {
             }
 
             // Load target user data
-            UserGameData targetUser = userRepo.loadUser(username);
+            UserGameData targetUser = userRepo.loadUser(targetUsername);
             if (targetUser == null) {
                 throw new Exception("Target user not found");
             }
 
-            int targetId = targetUser.getUserID();
-            boolean isNowFriend;
-            
-            // Check current friend status by ID
-            boolean isCurrentlyFriend = currentUser.getFriendList().contains(targetId);
-            
-            if (isCurrentlyFriend) {
+            int targetUserId = targetUser.getUserID();
+            if (targetUserId <= 0) {
+                // Show friendly message and abort, instead of throwing and leaving UI inconsistent
+                JOptionPane.showMessageDialog(this, "Cannot add/remove user with invalid ID: " + targetUserId, "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Toggle friend status
+            if (currentUser.hasFriend(targetUserId)) {
                 // Remove friend
-                currentUser.removeFriend(targetId);
-                friendsSet.remove(username);
-                isNowFriend = false;
+                currentUser.removeFriend(targetUserId);
+                friendsSet.remove(targetUsername);
             } else {
                 // Add friend
-                currentUser.addFriend(targetId);
-                friendsSet.add(username);
-                isNowFriend = true;
+                currentUser.addFriend(targetUserId);
+                friendsSet.add(targetUsername);
             }
-            
+
             // Save changes
             userRepo.saveUser(currentUser);
             
-            // Update UI
-            friendButton.setText(isNowFriend ? "Remove Friend" : "Add Friend");
-            friendButton.setBackground(isNowFriend 
-                ? new Color(255, 100, 100) 
-                : new Color(100, 200, 100));
-            friendButton.setForeground(Color.WHITE);
+            // Update UI - pass the actual current state (not inverted)
+            updateFriendButton(friendButton, currentUser.hasFriend(targetUserId));
+            revalidate();
+            repaint();
 
-            // Update the parent panel
-            JPanel userPanel = (JPanel) friendButton.getParent().getParent();
-            userPanel.setBackground(isNowFriend 
-                ? LightModeToggle.getComponentColor().brighter() 
-                : LightModeToggle.getComponentColor());
-                
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Failed to update friend status: " + e.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
+    }
+
+    private void updateFriendButton(JButton button, boolean isFriend) {
+        if (isFriend) {
+            button.setText("Remove Friend");
+            button.setBackground(new Color(255, 100, 100));
+        } else {
+            button.setText("Add Friend");
+            button.setBackground(new Color(100, 200, 100));
+        }
+        button.setForeground(Color.WHITE);
     }
 
     @Override
