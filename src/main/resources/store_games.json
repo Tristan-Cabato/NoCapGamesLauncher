@@ -1,51 +1,93 @@
 [
     {
         "gameID": 1,
-        "gameName": "genshin_impact",
-        "imageURL": "src/main/resources/ImageResources/genshin impact.jpg",
-        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Genshin Impact.lnk",
-        "gameDescription": "This game is ah bruh, replace Miliastra Sandbox"
+        "gameName": "blue_archive",
+        "imageURL": "src/main/resources/ImageResources/blue archive.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Blue Archive.lnk",
+        "gameDescription": "This is a description"
     },
     {
         "gameID": 2,
+        "gameName": "genshin_impact",
+        "imageURL": "src/main/resources/ImageResources/genshin impact.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Genshin Impact.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 3,
+        "gameName": "holocure",
+        "imageURL": "src/main/resources/ImageResources/holocure.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\HoloCure.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 4,
         "gameName": "honkai_star_rail",
         "imageURL": "src/main/resources/ImageResources/honkai star rail.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Honkai Star Rail.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 3,
+        "gameID": 5,
+        "gameName": "obs",
+        "imageURL": "src/main/resources/ImageResources/obs.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\obs.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 6,
         "gameName": "osu_lazer",
         "imageURL": "src/main/resources/ImageResources/osu_lazer.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\osu_lazer.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 4,
+        "gameID": 7,
         "gameName": "project_diva",
         "imageURL": "src/main/resources/ImageResources/project diva.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Project DIVA.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 5,
+        "gameID": 8,
         "gameName": "terraria",
         "imageURL": "src/main/resources/ImageResources/terraria.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Terraria.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 6,
+        "gameID": 9,
         "gameName": "tlauncher",
         "imageURL": "src/main/resources/ImageResources/tlauncher.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\TLauncher.lnk",
         "gameDescription": "This is a description"
     },
     {
-        "gameID": 7,
+        "gameID": 10,
+        "gameName": "ultrakill",
+        "imageURL": "src/main/resources/ImageResources/ultrakill.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\ULTRAKILL.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 11,
         "gameName": "uma_musume",
         "imageURL": "src/main/resources/ImageResources/uma musume.jpg",
         "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Uma Musume.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 12,
+        "gameName": "vtube_studio",
+        "imageURL": "src/main/resources/ImageResources/vtube studio.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\VTube Studio.lnk",
+        "gameDescription": "This is a description"
+    },
+    {
+        "gameID": 13,
+        "gameName": "wuthering_waves",
+        "imageURL": "src/main/resources/ImageResources/wuthering waves.jpg",
+        "gameURL": "C:\\Users\\SafiZ\\Documents\\NetBeansProjects\\NoCapGamesLauncher\\NoCapGamesLauncher\\src\\main\\resources\\Executables\\Wuthering Waves.lnk",
         "gameDescription": "This is a description"
     }
 ]

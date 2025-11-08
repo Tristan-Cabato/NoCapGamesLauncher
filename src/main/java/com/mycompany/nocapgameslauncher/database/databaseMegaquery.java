@@ -18,7 +18,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONException;
 
@@ -99,8 +101,8 @@ public class databaseMegaquery extends JFrame {
         // Add the button panel to the frame
         add(buttonPanel, BorderLayout.SOUTH);
     }
-    
-   private void scanGames() {
+        
+    private void scanGames() {
         logArea.append("Starting game scan...\n");
         
         File execDir = new File("src/main/resources/Executables");
@@ -115,43 +117,65 @@ public class databaseMegaquery extends JFrame {
             return;
         }
 
-        processedCount = 0;
-        for (File file : files) {
-            try {
+        int newGamesAdded = 0;
+        int existingGamesSkipped = 0;
+        
+        try (Connection conn = database.getConnection()) {
+            // Create a set of existing game names for quick lookup
+            Set<String> existingGames = new HashSet<>();
+            try (Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT LOWER(gameName) as gameName FROM gameData")) {
+                while (rs.next()) {
+                    existingGames.add(rs.getString("gameName"));
+                }
+            }
+
+            // Process each file
+            for (File file : files) {
                 String fileName = file.getName();
                 String baseName = fileName.substring(0, fileName.lastIndexOf('.'));
                 String gameName = baseName.replace(" ", "_").toLowerCase();
+                
+                // Skip if game already exists
+                if (existingGames.contains(gameName)) {
+                    logArea.append("Skipped (exists): " + gameName + "\n");
+                    existingGamesSkipped++;
+                    continue;
+                }
+
+                // Insert new game
                 String gamePath = file.getAbsolutePath();
                 String gameIconPath = "src/main/resources/ImageResources/" + baseName.toLowerCase() + ".jpg";
                 String gameDescription = "This is a description";
 
-                // Insert into database
                 String sql = "INSERT INTO gameData (gameName, gameURL, imageURL, gameDescription) VALUES (?, ?, ?, ?)";
-                try (Connection conn = database.getConnection();
-                    PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                    
+                try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                     pstmt.setString(1, gameName);
                     pstmt.setString(2, gamePath);
                     pstmt.setString(3, gameIconPath);
                     pstmt.setString(4, gameDescription);
                     
                     int affectedRows = pstmt.executeUpdate();
-                    
                     if (affectedRows > 0) {
                         try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                             if (generatedKeys.next()) {
                                 int generatedId = generatedKeys.getInt(1);
-                                logArea.append("Added to database: " + gameName + " (ID: " + generatedId + ")\n");
-                                processedCount++;
+                                logArea.append("Added new game: " + gameName + " (ID: " + generatedId + ")\n");
+                                newGamesAdded++;
                             }
                         }
                     }
+                } catch (SQLException e) {
+                    logArea.append("Error adding " + gameName + ": " + e.getMessage() + "\n");
                 }
-            } catch (SQLException e) {
-                logArea.append("Error processing " + file.getName() + ": " + e.getMessage() + "\n");
             }
+        } catch (SQLException e) {
+            logArea.append("Database error: " + e.getMessage() + "\n");
+            return;
         }
-        logArea.append("Scan complete. Processed " + processedCount + " games.\n");
+        
+        logArea.append(String.format("Scan complete. Added %d new games, skipped %d existing games.\n", 
+            newGamesAdded, existingGamesSkipped));
     }
     
     private void saveGamesToFile() {

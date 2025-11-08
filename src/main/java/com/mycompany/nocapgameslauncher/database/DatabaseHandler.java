@@ -58,34 +58,44 @@ public class DatabaseHandler {
         return -1; // User not found
     }
     
-
-    // Login Management
+    // Login
     public boolean login(String username, String password) throws SQLException, IOException {
-        String sql = "SELECT userID FROM users WHERE username = ? AND password = ?";
-
+        // First get the actual username from database (case-sensitive)
+        String getUsernameSql = "SELECT username FROM users WHERE username = ? AND password = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+            PreparedStatement stmt = conn.prepareStatement(getUsernameSql)) {
+            
             stmt.setString(1, username);
             stmt.setString(2, password);
+            
             try (ResultSet rs = stmt.executeQuery()) {
-                boolean loginSuccess = rs.next();
-                if (loginSuccess && !username.equals("Admin")) {
-                    // Skip admin
-                    UserRepository userRepo = new UserRepository();
-                    UserGameData userData = userRepo.loadUser(username);
+                if (rs.next()) {
+                    String actualUsername = rs.getString("username");
                     
-                    // If user data doesn't exist or needs to be refreshed
-                    if (userData == null) {
-                        userData = new UserGameData(username);
+                    // Only create user data file if the username case matches exactly
+                    if (!actualUsername.equals(username)) {
+                        return false;
                     }
-                    userData.setUserID(getUserId(username));
-                    userData.setUsername(username);
-                    userData.setPassword(password); // Store the password (for testing only)
                     
-                    // Save the user data (will overwrite existing file)
-                    userRepo.saveUser(userData);
-                } return loginSuccess;
+                    if (!actualUsername.equals("Admin")) {
+                        UserRepository userRepo = new UserRepository();
+                        UserGameData userData = userRepo.loadUser(actualUsername);
+                        
+                        if (userData == null) {
+                            userData = new UserGameData(actualUsername);
+                        }
+                        userData.setUserID(getUserId(actualUsername));
+                        userData.setUsername(actualUsername);
+                        userData.setPassword(password);
+                        
+                        userRepo.saveUser(userData);
+                    }
+                    
+                    // Set the actual username from database
+                    setCurrentUser(actualUsername);
+                    return true;
+                }
+                return false;
             }
         }
     }

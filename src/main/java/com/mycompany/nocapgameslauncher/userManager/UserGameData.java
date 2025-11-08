@@ -114,15 +114,15 @@ public class UserGameData {
     // File Operations
     private void loadFromFile() {
         try {
-            String currentUser = DatabaseHandler.getCurrentUser();
-            if (currentUser == null || currentUser.trim().isEmpty()) {
-                return;
-            }
-
-            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";
+            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + username + ".json";
             File userFile = new File(userJsonPath);
             
             if (!userFile.exists()) {
+                // If file doesn't exist, initialize with empty data and save it
+                this.ownedGameIds.clear();
+                this.gameStats.clear();
+                this.friendList.clear();
+                saveToFile();  // This will create the file with empty data
                 return;
             }
 
@@ -163,6 +163,10 @@ public class UserGameData {
             }
         } catch (Exception e) {
             System.err.println("Error loading user data: " + e.getMessage());
+            // Initialize with empty data if there's an error
+            this.ownedGameIds.clear();
+            this.gameStats.clear();
+            this.friendList.clear();
         }
     }
 

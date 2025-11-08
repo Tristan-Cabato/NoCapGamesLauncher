@@ -1,12 +1,13 @@
 {
   "ownedGameIds": [
     1,
+    2,
     6
   ],
   "gameStats": {
-    "6": {
-      "playCount": 2,
-      "lastPlayed": 1762104953093
+    "1": {
+      "playCount": 1,
+      "lastPlayed": 1762441678355
     }
   },
   "friendList": [],
