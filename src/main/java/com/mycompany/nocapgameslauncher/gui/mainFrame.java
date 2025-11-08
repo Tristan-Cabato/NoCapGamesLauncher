@@ -38,9 +38,14 @@ public class mainFrame extends JFrame {
         initializeFrame();
         setupUI();
         ThemeManager.updateTheme(); // Apply initial theme
-        // Navigate to the saved panel
+        
+        // Navigate to the saved panel, but redirect from GAME_DETAIL to LIBRARY
         if (startPanel != null && !startPanel.isEmpty() && !startPanel.equals("LOGIN")) {
-            showCard(startPanel);
+            if ("GAME_DETAIL".equals(startPanel)) {
+                showCard("LIBRARY");
+            } else {
+                showCard(startPanel);
+            }
         }
     }
 
