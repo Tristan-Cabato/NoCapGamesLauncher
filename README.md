@@ -9,6 +9,10 @@
     3.) Tracking Changes
         - The Pattern Defense file is deleted. Our group has our own tracker.
         - Deleted .windsurf folder, brodie never reads it.
+    4.) Friends Panel Revamp
+        - FriendList is now saved in the json file
+        - Friends' games are now visible
+        - Add/Remove friends now works
 
 # Next Agenda
     - The insane overhaul: JavaFX, Code Cleanup
@@ -47,3 +51,11 @@
     >> GameDetail - Memento bandaid
     /gui
         mainFrame.java
+
+    >> Friends Panel Revamp
+    /gui
+        mainFrame.java
+    /panels
+        Friends.java
+    /userManager
+        UserGameData.java
