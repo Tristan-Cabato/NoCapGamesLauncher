@@ -104,47 +104,70 @@ public class UserGameData {
     // File Operations
     private void loadFromFile() {
         try {
-            String currentUser = DatabaseHandler.getCurrentUser();
-            if (currentUser == null || currentUser.trim().isEmpty()) {
-                return;
-            }
-
-            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";
+            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + username + ".json";
             File userFile = new File(userJsonPath);
             
             if (!userFile.exists()) {
+                // If file doesn't exist, initialize with empty data and save it
+                this.ownedGameIds.clear();
+                this.gameStats.clear();
+                this.friendList.clear();
+                saveToFile();  // This will create the file with empty data
                 return;
             }
 
             try (FileReader reader = new FileReader(userFile)) {
                 Map<String, Object> userData = gson.fromJson(reader, Map.class);
-                if (userData == null) {
-                    return;
-                }
+                if (userData != null) {
+                    // Load owned games
+                    if (userData.containsKey("ownedGameIds")) {
+                        List<Double> gameIds = (List<Double>) userData.get("ownedGameIds");
+                        if (gameIds != null) {
+                            ownedGameIds.clear();
+                            for (Double id : gameIds) {
+                                ownedGameIds.add(id.intValue());
+                            }
+                        }
+                    }
 
-                // Load owned games
-                if (userData.containsKey("ownedGameIds")) {
-                    List<Number> gameIds = (List<Number>) userData.get("ownedGameIds");
-                    gameIds.forEach(id -> ownedGameIds.add(id.intValue()));
-                }
+                    // Load game stats
+                    if (userData.containsKey("gameStats")) {
+                        Map<String, Map<String, Object>> statsMap = 
+                            (Map<String, Map<String, Object>>) userData.get("gameStats");
+                        if (statsMap != null) {
+                            gameStats.clear();
+                            for (Map.Entry<String, Map<String, Object>> entry : statsMap.entrySet()) {
+                                try {
+                                    int gameId = Integer.parseInt(entry.getKey());
+                                    Map<String, Object> statData = entry.getValue();
+                                    int playCount = ((Double) statData.getOrDefault("playCount", 0.0)).intValue();
+                                    long lastPlayed = ((Double) statData.getOrDefault("lastPlayed", 0.0)).longValue();
+                                    gameStats.put(gameId, new GameStats(playCount, lastPlayed));
+                                } catch (NumberFormatException e) {
+                                    System.err.println("Invalid game ID in stats: " + entry.getKey());
+                                }
+                            }
+                        }
+                    }
 
-                // Load game stats
-                if (userData.containsKey("gameStats")) {
-                    Map<String, Map<String, Number>> statsMap = 
-                        (Map<String, Map<String, Number>>) userData.get("gameStats");
-                    statsMap.forEach((gameId, stats) -> {
-                        gameStats.put(
-                            Integer.parseInt(gameId),
-                            new GameStats(
-                                stats.get("playCount").intValue(),
-                                stats.get("lastPlayed").longValue()
-                            )
-                        );
-                    });
+                    // Load friends list
+                    if (userData.containsKey("friendList")) {
+                        List<Double> friends = (List<Double>) userData.get("friendList");
+                        if (friends != null) {
+                            friendList.clear();
+                            for (Double id : friends) {
+                                friendList.add(id.intValue());
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
             System.err.println("Error loading user data: " + e.getMessage());
+            // Initialize with empty data if there's an error
+            this.ownedGameIds.clear();
+            this.gameStats.clear();
+            this.friendList.clear();
         }
     }
 
