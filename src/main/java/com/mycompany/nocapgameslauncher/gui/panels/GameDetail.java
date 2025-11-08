@@ -9,6 +9,7 @@ import com.mycompany.nocapgameslauncher.gui.components.sidebarCreator;
 import com.mycompany.nocapgameslauncher.game_manager.GameManager;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.game_manager.Game;
+import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
 
 import javax.swing.*;
 
@@ -213,25 +214,33 @@ public class GameDetail extends ThemePanel {
     public void setGame(String gameTitle, Integer gameId) {
         if (gameTitle == null || gameId == null) return;
         
+        // Reset current game and ID
+        this.currentGame = null;
+        this.currentGameId = -1;
+        
         // Get the game instance from the manager
-        this.currentGame = GameManager.getInstance().getGameById(gameId);
-        if (this.currentGame == null) return;
-        
-        // Update the game ID
-        this.currentGameId = currentGame.getID();
-        
-        // Get the game description
-        String description = null;
-        Map<String, String> gameDetails = resourceLoader.getGameById(gameId);
-        if (gameDetails != null) {
-            description = gameDetails.get("gameDescription");
+        Game game = GameManager.getInstance().getGameById(gameId);
+        if (game == null) {
+            System.err.println("Game not found with ID: " + gameId);
+            return;
         }
         
-        // Update the UI
-        setGame(gameTitle, description);
+        // Update the current game and ID
+        this.currentGame = game;
+        this.currentGameId = game.getID();
         
-        // Check ownership
-        checkIfOwned();
+        // Get the game description
+        Map<String, String> gameDetails = resourceLoader.getGameById(gameId);
+        final String finalDescription = (gameDetails != null && gameDetails.containsKey("gameDescription")) ? 
+            gameDetails.get("gameDescription") : 
+            "No description available.";
+        
+        // Update the UI with the new game data using the existing setGame method
+        SwingUtilities.invokeLater(() -> {
+            setGame(gameTitle, finalDescription);
+            checkIfOwned();
+            updateButtonStates();
+        });
     }
 
     private Map<String, String> loadGameDescriptions() {
@@ -442,7 +451,7 @@ public class GameDetail extends ThemePanel {
             "<p><b>Times Played:</b> %d</p>" +
             "<p><b>Last Played:</b> %s</p>" +
             "</body></html>",
-            currentGame.getTitle(),
+            NameFormatting.formatGameName(currentGame.getTitle()),
             currentGame.getPlayCount(),
             lastPlayed
         );

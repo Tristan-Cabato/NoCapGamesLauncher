@@ -71,7 +71,7 @@ public class sidebarCreator {
                 Map<String, String> gameDetails = resourceLoader.getGameById(gameId);
                 if (gameDetails != null) {
                     String formattedName = NameFormatting.formatGameName(gameDetails.get("gameName"));
-                    addGameItem(ownedGamesPanel, formattedName, frame, onItemClick);
+                    addGameItem(ownedGamesPanel, formattedName, gameId, frame, onItemClick);
                 }
             }
         }
@@ -106,7 +106,7 @@ public class sidebarCreator {
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
     }
 
-    private static void addGameItem(JPanel panel, String text, mainFrame frame, @SuppressWarnings("unused") Consumer<String> onItemClick) {
+    private static void addGameItem(JPanel panel, String text, int gameId, mainFrame frame, @SuppressWarnings("unused") Consumer<String> onItemClick) {
         ThemeButton button = new ThemeButton(text, false, true, LightModeToggle.getTextColor());
         FontManager.fixIcon(button, Integer.MAX_VALUE, 40);
         button.setHorizontalAlignment(SwingConstants.LEFT); // Size messed up lol, I'll figure it out in prefinals
@@ -121,7 +121,7 @@ public class sidebarCreator {
             }
         });
         
-        button.addActionListener(_ -> frame.showGameDetail(text));
+        button.addActionListener(_ -> frame.showGameDetail(text, gameId));
         panel.add(button);
     }
 }

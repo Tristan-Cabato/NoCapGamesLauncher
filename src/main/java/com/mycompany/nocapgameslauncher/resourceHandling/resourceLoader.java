@@ -9,8 +9,10 @@ import org.json.*;
 
 import com.mycompany.nocapgameslauncher.gui.panels.*;
 
+// For simplicity sake, name images as snake_case.jpg. Its not case sensitive.
+
 public class resourceLoader {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     public static final String RESOURCE_DIRECTORY = "src/main/resources/";
     public static final String PROXYIMAGE = "ImageResources/default_game_icon.jpg";
     

@@ -59,8 +59,6 @@ public class Store extends ThemePanel {
                     return;
                 }
 
-                System.out.println("Successfully loaded " + games.size() + " games");
-
                 // Create and use the iterator
                 StoreGameIterator gameIterator = new StoreGameIterator(games);
                 while (gameIterator.hasNext()) {

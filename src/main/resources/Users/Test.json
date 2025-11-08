@@ -1,7 +1,11 @@
 {
-  "ownedGameIds": [],
+  "ownedGameIds": [
+    1,
+    2,
+    13
+  ],
   "gameStats": {},
-  "userID": 5.0,
+  "userID": 5,
   "username": "Test",
   "password": "test123"
 }
