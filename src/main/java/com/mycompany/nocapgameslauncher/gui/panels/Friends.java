@@ -49,24 +49,7 @@ public class Friends extends ThemePanel {
     private void setupUI() {
         setLayout(new BorderLayout());
         
-        // Get current user
-        UserMemento currentMemento = SessionIterator.getCurrentMemento();
-        currentUsername = currentMemento != null ? currentMemento.getUsername() : "";
-
-        // Initialize friends set
-        friendsSet = new HashSet<>();
-        if (currentMemento != null) {
-            UserGameData userData = userRepo.loadUser(currentUsername);
-            if (userData != null) {
-                friendsSet = userData.getFriendList().stream()
-                    .map(userRepo::getUserById)
-                    .filter(Objects::nonNull)
-                    .map(UserGameData::getUsername)
-                    .collect(Collectors.toSet());
-            }
-        }
-
-        // Create title
+        // Initialize UI components first
         titleLabel = new JLabel("Friends");
         FontManager.setFont(titleLabel, Font.BOLD, 24);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
@@ -85,10 +68,43 @@ public class Friends extends ThemePanel {
         scrollPane.getViewport().setOpaque(false);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Load and display users
+        // Get current user
+        UserMemento currentMemento = SessionIterator.getCurrentMemento();
+        currentUsername = currentMemento != null ? currentMemento.getUsername() : "";
+
+        // Initialize friends set
+        friendsSet = new HashSet<>();
+        if (currentMemento != null && !currentUsername.isEmpty()) {
+            UserGameData currentUser = userRepo.loadUser(currentUsername);
+            if (currentUser != null) {
+                // Get all users to map IDs to usernames
+                Map<Integer, String> userIdToUsername = new HashMap<>();
+                UsersIterator allUsers = new UsersIterator();
+                while (allUsers.hasNext()) {
+                    String u = allUsers.next();
+                    UserGameData user = userRepo.loadUser(u);
+                    if (user != null) {
+                        userIdToUsername.put(user.getUserID(), u);
+                    }
+                }
+                
+                // Populate friendsSet with usernames of friends
+                for (Integer friendId : currentUser.getFriendList()) {
+                    String friendUsername = userIdToUsername.get(friendId);
+                    if (friendUsername != null) {
+                        friendsSet.add(friendUsername);
+                    } else {
+                        System.out.println("Warning: Could not find username for friend ID: " + friendId);
+                    }
+                }
+            }
+        }
+
+        // Now load and display users
         loadAndDisplayUsers();
         updateTheme();
     }
+    
 
     private void loadAndDisplayUsers() {
         usersPanel.removeAll();
@@ -287,44 +303,44 @@ public class Friends extends ThemePanel {
         }
 
         try {
+            // Load current user data
             UserGameData currentUser = userRepo.loadUser(currentUsername);
             if (currentUser == null) {
                 throw new Exception("Current user not found");
             }
 
-            // Find target user
-            UsersIterator usersIterator = new UsersIterator();
-            UserGameData targetUser = null;
-            
-            while (usersIterator.hasNext()) {
-                String iterUsername = usersIterator.next();
-                if (iterUsername.equals(username)) {
-                    targetUser = userRepo.loadUser(username);
-                    break;
-                }
-            }
-
+            // Load target user data
+            UserGameData targetUser = userRepo.loadUser(username);
             if (targetUser == null) {
                 throw new Exception("Target user not found");
             }
 
+            int targetId = targetUser.getUserID();
             boolean isNowFriend;
-            if (friendsSet.contains(username)) {
+            
+            // Check current friend status by ID
+            boolean isCurrentlyFriend = currentUser.getFriendList().contains(targetId);
+            
+            if (isCurrentlyFriend) {
                 // Remove friend
-                currentUser.removeFriend(targetUser.getUserID());
+                currentUser.removeFriend(targetId);
                 friendsSet.remove(username);
                 isNowFriend = false;
             } else {
                 // Add friend
-                currentUser.addFriend(targetUser.getUserID());
+                currentUser.addFriend(targetId);
                 friendsSet.add(username);
                 isNowFriend = true;
             }
+            
+            // Save changes
             userRepo.saveUser(currentUser);
-
-            // Update button appearance
+            
+            // Update UI
             friendButton.setText(isNowFriend ? "Remove Friend" : "Add Friend");
-            friendButton.setBackground(isNowFriend ? new Color(255, 100, 100) : new Color(100, 200, 100));
+            friendButton.setBackground(isNowFriend 
+                ? new Color(255, 100, 100) 
+                : new Color(100, 200, 100));
             friendButton.setForeground(Color.WHITE);
 
             // Update the parent panel
@@ -332,10 +348,7 @@ public class Friends extends ThemePanel {
             userPanel.setBackground(isNowFriend 
                 ? LightModeToggle.getComponentColor().brighter() 
                 : LightModeToggle.getComponentColor());
-            
-            // Force theme update
-            ThemeManager.updateTheme();
-            
+                
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                 "Failed to update friend status: " + e.getMessage(),

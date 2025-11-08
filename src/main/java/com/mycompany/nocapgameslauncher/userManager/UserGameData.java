@@ -177,15 +177,14 @@ public class UserGameData {
 
     private void saveToFile() {
         try {
-            String currentUser = DatabaseHandler.getCurrentUser();
-            DatabaseHandler dbHandler = DatabaseHandler.getInstance();
-            if (currentUser == null || currentUser.trim().isEmpty() || 
-                currentUser.equalsIgnoreCase(dbHandler.DB_USER)) {
+            // Use the instance's username instead of DatabaseHandler.getCurrentUser()
+            if (username == null || username.trim().isEmpty() || 
+                username.equalsIgnoreCase("admin")) {
                 // Skip saving for admin or invalid users
                 return;
             }
 
-            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + currentUser + ".json";
+            String userJsonPath = resourceLoader.RESOURCE_DIRECTORY + "Users/" + username + ".json";
             File userFile = new File(userJsonPath);
             
             // Create parent directories if they don't exist
@@ -201,6 +200,11 @@ public class UserGameData {
                 }
             }
 
+            // Save user ID and other basic info
+            userData.put("userID", userID);
+            userData.put("username", username);
+            userData.put("password", password);
+            
             // Save owned games
             userData.put("ownedGameIds", new ArrayList<>(ownedGameIds));
             
@@ -213,7 +217,7 @@ public class UserGameData {
                 Map<String, Object> statMap = new HashMap<>();
                 statMap.put("playCount", stats.getPlayCount());
                 statMap.put("lastPlayed", stats.getLastPlayed());
-                statsMap.put(gameId.toString(), statMap);
+                statsMap.put(String.valueOf(gameId), statMap);
             });
             userData.put("gameStats", statsMap);
 
@@ -223,6 +227,7 @@ public class UserGameData {
             }
         } catch (Exception e) {
             System.err.println("Error saving user data: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
