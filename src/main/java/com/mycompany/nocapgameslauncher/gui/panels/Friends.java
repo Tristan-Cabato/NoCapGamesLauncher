@@ -1,7 +1,9 @@
 package com.mycompany.nocapgameslauncher.gui.panels;
 
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
+import com.mycompany.nocapgameslauncher.gui.utilities.ThemeManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
+import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.iterator.UsersIterator;
 import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
@@ -20,10 +22,20 @@ public class Friends extends ThemePanel {
     private DefaultListModel<String> allUsersModel;
     private JLabel friendsLabel;
     private JLabel allUsersLabel;
+    private mainFrame frame;
 
-    public Friends() {
+    public Friends(mainFrame frame) {
         super(new BorderLayout());
+        this.frame = frame;
         setupUI();
+    }
+
+    public Friends(mainFrame frame, String startPanel) {
+        this(frame);
+        ThemeManager.updateTheme();
+        if (startPanel != null && !startPanel.isEmpty() && !startPanel.equals("LOGIN")) {
+            frame.showCard(startPanel);
+        }
     }
 
     private void setupUI() {
