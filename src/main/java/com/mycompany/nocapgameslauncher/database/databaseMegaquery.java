@@ -215,7 +215,7 @@ public class databaseMegaquery extends JFrame {
 
     private void addMegaQueryButton(JPanel buttonPanel) {
         JButton megaQueryButton = new JButton("Run MegaQuery");
-        megaQueryButton.setBackground(new Color(70, 130, 180));
+        megaQueryButton.setBackground(new Color(220, 53, 69));
         megaQueryButton.setForeground(Color.WHITE);
         megaQueryButton.setFocusPainted(false);
         megaQueryButton.addActionListener(_ -> runMegaQuery());

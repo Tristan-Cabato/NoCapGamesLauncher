@@ -31,14 +31,22 @@ public class SessionIterator implements Iterator<UserMemento> {
     }
     
     public static UserMemento getCurrentMemento() {
-        if (currentMemento == null) {
-            currentMemento = UserMemento.loadFromFile();
+        // Always try to load from file to ensure we have the latest session
+        UserMemento loadedMemento = UserMemento.loadFromFile();
+        if (loadedMemento != null && loadedMemento.shouldRememberMe()) {
+            currentMemento = loadedMemento;
         }
-        return currentMemento != null && currentMemento.shouldRememberMe() ? currentMemento : null;
+        return currentMemento;
     }
     
     public static void setCurrentMemento(UserMemento memento) {
         currentMemento = memento;
+        if (memento != null) {
+            memento.saveToFile();
+        } else {
+            // Clear the session file if memento is null
+            UserMemento.clearSession();
+        }
     }
     
     public static void saveCurrentMemento() {

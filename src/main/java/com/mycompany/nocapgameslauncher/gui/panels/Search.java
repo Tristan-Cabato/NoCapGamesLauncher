@@ -8,6 +8,8 @@ import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
 import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
+import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
+import java.io.File;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -115,13 +117,23 @@ public class Search extends ThemePanel {
         } else {
             resultsLabel.setText("Found " + matchingGames.size() + " games matching '" + query + "'");
             
-            // Create and add game cards for matching games
             for (Game game : matchingGames) {
-                ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
+                String formattedTitle = NameFormatting.formatGameName(game.getTitle());
+                String imagePath = resourceLoader.RESOURCE_DIRECTORY + "ImageResources/" + 
+                    formattedTitle.toLowerCase().replace(" ", "_") + ".jpg";
+                File imageFile = new File(imagePath);
+                ImageIcon gameIcon;
+                
+                if (imageFile.exists()) {
+                    gameIcon = new ImageIcon(imagePath);
+                } else {
+                    gameIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
+                }
+                
                 JPanel card = GameCardCreator.createGameCard(
-                    game.getTitle(),
+                    formattedTitle,
                     game.getDescription(),
-                    proxyIcon,
+                    gameIcon,
                     game.getID(),
                     () -> frame.showGameDetail(game.getTitle(), game.getID())
                 );

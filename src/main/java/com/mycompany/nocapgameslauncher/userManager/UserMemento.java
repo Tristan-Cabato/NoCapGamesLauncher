@@ -3,6 +3,7 @@ package com.mycompany.nocapgameslauncher.userManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,9 +12,10 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 
 public class UserMemento {
-    private static final String SESSION_FILE = "src/main/resources/Users/sessionManager.json";
+    private static final String SESSION_FILE = resourceLoader.RESOURCE_DIRECTORY + "Users/sessionManager.json";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     
     private boolean rememberMe;
@@ -91,7 +93,10 @@ public class UserMemento {
         try {
             File sessionFile = new File(SESSION_FILE);
             // Create parent directories if they don't exist
-            sessionFile.getParentFile().mkdirs();
+            File parentDir = sessionFile.getParentFile();
+            if (parentDir != null) {
+                parentDir.mkdirs();
+            }
             
             JsonObject empty = new JsonObject();
             empty.addProperty("rememberMe", false);

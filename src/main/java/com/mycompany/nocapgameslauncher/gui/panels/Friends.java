@@ -3,7 +3,6 @@ package com.mycompany.nocapgameslauncher.gui.panels;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemeManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
-import com.mycompany.nocapgameslauncher.gui.mainFrame;
 import com.mycompany.nocapgameslauncher.gui.utilities.FontManager;
 import com.mycompany.nocapgameslauncher.iterator.UsersIterator;
 import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
@@ -12,6 +11,7 @@ import com.mycompany.nocapgameslauncher.userManager.UserGameData;
 import com.mycompany.nocapgameslauncher.userManager.UserRepository;
 import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 import com.mycompany.nocapgameslauncher.resourceHandling.GameCardData;
+import com.mycompany.nocapgameslauncher.gui.mainFrame;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -24,14 +24,15 @@ import java.util.stream.Collectors;
 public class Friends extends ThemePanel {
     private JPanel usersPanel;
     private JScrollPane scrollPane;
-    private mainFrame frame;
-    private UserRepository userRepo;
+    private final UserRepository userRepo;
     private String currentUsername;
     private Set<String> friendsSet;
+    private final mainFrame frame;
 
     public Friends(mainFrame frame) {
         super(new BorderLayout());
         this.frame = frame;
+        this.userRepo = new UserRepository();
         setupUI();
     }
 
@@ -45,8 +46,7 @@ public class Friends extends ThemePanel {
 
     private void setupUI() {
         setLayout(new BorderLayout());
-        userRepo = new UserRepository();
-
+        
         // Get current user
         UserMemento currentMemento = SessionIterator.getCurrentMemento();
         currentUsername = currentMemento != null ? currentMemento.getUsername() : "";
@@ -89,6 +89,10 @@ public class Friends extends ThemePanel {
     }
 
     private void loadAndDisplayUsers() {
+        // Always get the current user from session
+        UserMemento currentMemento = SessionIterator.getCurrentMemento();
+        currentUsername = currentMemento != null ? currentMemento.getUsername() : "";
+        
         usersPanel.removeAll();
 
         // Add current user's friends first
@@ -101,18 +105,32 @@ public class Friends extends ThemePanel {
             return;
         }
 
-        // Get all users except current user using iterator
+        // Get all users except current user and Admin using iterator
         UsersIterator usersIterator = new UsersIterator();
         boolean hasUsers = false;
-        String previousUsername = null;
+        int userCount = 0;
+        final int MAX_USERS_PER_PAGE = 10; // Adjust this number as needed
 
-        while (usersIterator.hasNext()) {
+        // Create a wrapper panel for better scrolling
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+
+        while (usersIterator.hasNext() && userCount < MAX_USERS_PER_PAGE) {
             String username = usersIterator.next();
-            if (!username.equals(currentUsername)) {
-                usersPanel.add(createUserPanel(username));
+            // Skip current user and Admin user (case-insensitive check)
+            if (!username.equals(currentUsername) && !username.equals("Admin")) {
+                contentPanel.add(createUserPanel(username));
                 hasUsers = true;
+                userCount++;
             }
         }
+        
+        // Add the content panel to usersPanel with glue for proper spacing
+        usersPanel.removeAll();
+        usersPanel.setLayout(new BorderLayout());
+        usersPanel.add(contentPanel, BorderLayout.NORTH);
+        usersPanel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
 
         if (!hasUsers) {
             JLabel noUsersLabel = new JLabel("No other users available.");
@@ -255,8 +273,8 @@ public class Friends extends ThemePanel {
             final String targetUsername = username; // Make final for lambda
             
             while (usersIterator.hasNext()) {
-                String currentUsername = usersIterator.next();
-                if (currentUsername.equals(targetUsername)) {
+                String iterUsername = usersIterator.next();
+                if (iterUsername.equals(targetUsername)) {
                     targetUser = userRepo.loadUser(targetUsername);
                     break;
                 }
@@ -349,21 +367,17 @@ public class Friends extends ThemePanel {
     
     private void updateComponentTheme(Container container) {
         for (Component comp : container.getComponents()) {
-            if (comp instanceof JLabel) {
-                ((JLabel) comp).setForeground(LightModeToggle.getTextColor());
-            } else if (comp instanceof JButton) {
-                JButton button = (JButton) comp;
-                String text = button.getText();
-                if ("Show Games".equals(text) || "Hide Games".equals(text)) {
-                    button.setForeground(LightModeToggle.getTextColor());
-                } else if ("Add Friend".equals(text) || "Remove Friend".equals(text)) {
-                    button.setForeground(Color.WHITE);
-                    button.setBackground(text.equals("Add Friend") ? 
-                        new Color(100, 200, 100) : new Color(200, 100, 100));
-                }
-            } else if (comp instanceof JPanel) {
-                ((JPanel) comp).setOpaque(false);
-                updateComponentTheme((JPanel) comp);
+            if (comp instanceof JButton button) {
+                button.setBackground(LightModeToggle.getComponentColor());
+                button.setForeground(LightModeToggle.getTextColor());
+            } else if (comp instanceof JLabel label) {
+                label.setForeground(LightModeToggle.getTextColor());
+            } else if (comp instanceof JComponent jcomp) {
+                jcomp.setBackground(LightModeToggle.getBackgroundColor());
+                jcomp.setForeground(LightModeToggle.getTextColor());
+            } else if (comp instanceof JPanel panel) {
+                panel.setOpaque(false);
+                updateComponentTheme(panel);
             }
         }
     }

@@ -77,18 +77,22 @@ public class DatabaseHandler {
                         return false;
                     }
                     
-                    if (!actualUsername.equals("Admin")) {
+                    // Skip all user data operations for Admin user
+                    if (!actualUsername.equals(DB_USER)) {
                         UserRepository userRepo = new UserRepository();
                         UserGameData userData = userRepo.loadUser(actualUsername);
-                        
                         if (userData == null) {
                             userData = new UserGameData(actualUsername);
+                            userData.setUserID(getUserId(actualUsername));
+                            userData.setUsername(actualUsername);
+                            userData.setPassword(password);
+                            userRepo.saveUser(userData);
+                        } else {
+                            userData.setUserID(getUserId(actualUsername));
+                            userData.setUsername(actualUsername);
+                            userData.setPassword(password);
+                            userRepo.saveUser(userData);
                         }
-                        userData.setUserID(getUserId(actualUsername));
-                        userData.setUsername(actualUsername);
-                        userData.setPassword(password);
-                        
-                        userRepo.saveUser(userData);
                     }
                     
                     // Set the actual username from database
