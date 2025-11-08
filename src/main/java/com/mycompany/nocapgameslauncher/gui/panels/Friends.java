@@ -21,6 +21,7 @@ import com.mycompany.nocapgameslauncher.userManager.UserGameData;
 import com.mycompany.nocapgameslauncher.userManager.UserRepository;
 
 public class Friends extends ThemePanel {
+    private static JWindow popup = null;  // Single static popup instance
     private JList<String> friendList;
     private JList<String> allUsersList;
     private DefaultListModel<String> friendsModel;
@@ -31,6 +32,14 @@ public class Friends extends ThemePanel {
     public Friends(mainFrame frame) {
         super(new BorderLayout());
         setupUI();
+        
+        // Add component listener to handle panel visibility changes
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                hideUserGames();
+            }
+        });
     }
 
     private void setupUI() {
@@ -66,11 +75,22 @@ public class Friends extends ThemePanel {
         // All users list
         allUsersModel = new DefaultListModel<>();
         UsersIterator allUsersIterator = new UsersIterator();
+        String currentUsername = SessionIterator.getCurrentMemento() != null ? 
+            SessionIterator.getCurrentMemento().getUsername() : "";
+            
         if (!allUsersIterator.hasNext()) {
             allUsersModel.addElement("No users available.");
         } else {
             while (allUsersIterator.hasNext()) {
-                allUsersModel.addElement(allUsersIterator.next());
+                String username = allUsersIterator.next();
+                // Skip the current user
+                if (!username.equals(currentUsername)) {
+                    allUsersModel.addElement(username);
+                }
+            }
+            
+            if (allUsersModel.size() == 0) {
+                allUsersModel.addElement("No other users available.");
             }
         }
         
@@ -88,7 +108,6 @@ public class Friends extends ThemePanel {
     
     private JList<String> createStyledList(DefaultListModel<String> model) {
         JList<String> list = new JList<String>(model) {
-            private JWindow popup;
             
             {
                 // Mouse click listener to show user games
@@ -112,19 +131,44 @@ public class Friends extends ThemePanel {
             }
             
             private void showUserGames(String username) {
-                Graphics g = getGraphics();
-                hideUserGames();
+                Friends.this.hideUserGames();
+                
+                // Create a new popup if one doesn't exist
+                if (popup == null) {
+                    popup = new JWindow();
+                    popup.setFocusableWindowState(false);
+                    popup.setFocusable(false);
+                    popup.setAlwaysOnTop(false);
+                }
                 
                 // Get user's owned games
                 UserRepository userRepo = new UserRepository();
                 UserGameData userData = userRepo.loadUser(username);
                 if (userData == null || userData.getOwnedGameIds().isEmpty()) {
+                    // Show a message that the user has no games
+                    JLabel noGamesLabel = new JLabel("No games in library");
+                    noGamesLabel.setFont(noGamesLabel.getFont().deriveFont(Font.BOLD));
+                    noGamesLabel.setOpaque(true);
+                    noGamesLabel.setBackground(LightModeToggle.getComponentColor());
+                    noGamesLabel.setForeground(LightModeToggle.getTextColor());
+                    noGamesLabel.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(LightModeToggle.getComponentColor().darker()),
+                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
+                    ));
+                    
+                    popup.getContentPane().removeAll();
+                    popup.getContentPane().setBackground(LightModeToggle.getComponentColor());
+                    popup.getContentPane().add(noGamesLabel);
+                    popup.pack();
+                    
+                    // Position the popup
+                    positionPopup();
+                    popup.setVisible(true);
                     return;
                 }
                 
-                // Create popup window
-                popup = new JWindow();
-                popup.setFocusableWindowState(false);
+                // Clear previous content if any
+                popup.getContentPane().removeAll();
                 
                 // Create content panel
                 JPanel content = new JPanel();
@@ -168,33 +212,9 @@ public class Friends extends ThemePanel {
                 popup.setContentPane(content);
                 popup.pack();
                 
-                // Position popup near the cursor
-                Point mouseLoc = MouseInfo.getPointerInfo().getLocation();
-                
-                // Get screen dimensions to ensure popup stays on screen
-                GraphicsConfiguration gc = getGraphicsConfiguration();
-                Rectangle screenBounds = gc.getBounds();
-                int x = mouseLoc.x + 15;  // Small offset from cursor
-                int y = mouseLoc.y + 15;
-                
-                // Adjust position if popup would go off screen
-                if (x + popup.getWidth() > screenBounds.x + screenBounds.width) {
-                    x = screenBounds.x + screenBounds.width - popup.getWidth() - 5;
-                }
-                if (y + popup.getHeight() > screenBounds.y + screenBounds.height) {
-                    y = screenBounds.y + screenBounds.height - popup.getHeight() - 5;
-                }
-                
-                popup.setLocation(x, y);
-                popup.setVisible(true);
+                positionPopup();
             }
             
-            private void hideUserGames() {
-                if (popup != null) {
-                    popup.dispose();
-                    popup = null;
-                }
-            }
             
             @Override
             public void updateUI() {
@@ -372,6 +392,36 @@ public class Friends extends ThemePanel {
         }
     }
 
+    private void positionPopup() {
+        // Position popup near the cursor
+        Point mouseLoc = MouseInfo.getPointerInfo().getLocation();
+        
+        // Get screen dimensions to ensure popup stays on screen
+        GraphicsConfiguration gc = getGraphicsConfiguration();
+        Rectangle screenBounds = gc.getBounds();
+        int x = mouseLoc.x + 15;  // Small offset from cursor
+        int y = mouseLoc.y + 15;
+        
+        // Adjust position if popup would go off screen
+        if (x + popup.getWidth() > screenBounds.x + screenBounds.width) {
+            x = screenBounds.x + screenBounds.width - popup.getWidth() - 5;
+        }
+        if (y + popup.getHeight() > screenBounds.y + screenBounds.height) {
+            y = screenBounds.y + screenBounds.height - popup.getHeight() - 5;
+        }
+        
+        popup.setLocation(x, y);
+        popup.setVisible(true);
+    }
+    
+    private void hideUserGames() {
+        if (popup != null) {
+            popup.setVisible(false);
+            popup.dispose();
+            popup = null;
+        }
+    }
+    
     @Override
     public void updateTheme() {
         setBackground(LightModeToggle.getBackgroundColor());
