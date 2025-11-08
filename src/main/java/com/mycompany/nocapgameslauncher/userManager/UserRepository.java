@@ -42,15 +42,27 @@ public class UserRepository {
     
     public UserGameData loadUser(String username) {
         String filename = USERS_DIR + username + ".json";
-        try (Reader reader = new FileReader(filename)) {
-            return gson.fromJson(reader, UserGameData.class);
+        try {
+            File file = new File(filename);
+            if (!file.exists() || !file.getName().equals(username + ".json")) {
+                return null;
+            }
+            
+            try (Reader reader = new FileReader(file)) {
+                UserGameData data = gson.fromJson(reader, UserGameData.class);
+                if (data != null && !data.getUsername().equals(username)) {
+                    return null;
+                }
+                return data;
+            }
         } catch (IOException e) {
             return null;
         }
     }
     
     public boolean userExists(String username) {
-        return Files.exists(Paths.get(USERS_DIR + username + ".json"));
+        File file = new File(USERS_DIR + username + ".json");
+        return file.exists() && file.getName().equals(username + ".json");
     }
     
     public UserGameData getUserById(int userId) {
