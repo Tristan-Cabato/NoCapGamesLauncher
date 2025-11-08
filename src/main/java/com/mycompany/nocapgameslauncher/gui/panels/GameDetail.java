@@ -257,19 +257,14 @@ public class GameDetail extends ThemePanel {
             // Add the game to the user's library
             UserGameData userGameData = UserGameData.loadForUser(currentUser);
             userGameData.addGame(currentGameId);
-            
-            // Update the UI
+
             userOwned = true;
             updateButtonStates();
             
-            // Show success message
-            JOptionPane.showMessageDialog(
-                this,
-                "Game added to your library!",
-                "Success",
-                JOptionPane.INFORMATION_MESSAGE
-            );
-            
+            // Request sidebar refresh in the main frame
+            if (frame != null) {
+                frame.refreshSidebar();
+            }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(
                 this,
@@ -370,6 +365,11 @@ public class GameDetail extends ThemePanel {
             userGameData.removeGame(currentGameId);
             userOwned = false;
             updateButtonStates();
+            
+            // Request sidebar refresh in the main frame
+            if (frame != null) {
+                frame.refreshSidebar();
+            }
             
             // Force a UI update on the Event Dispatch Thread
             SwingUtilities.invokeLater(() -> {

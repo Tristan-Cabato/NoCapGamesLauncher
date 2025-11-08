@@ -81,6 +81,17 @@ public class mainFrame extends JFrame {
         showCard("LIBRARY");
     }
 
+    public void refreshSidebar() {
+        if (sidebarPanel != null) {
+            getContentPane().remove(sidebarPanel);
+            sidebarPanel = sidebarCreator.createNavigationSidebar(250, this, this::showCard);
+            getContentPane().add(sidebarPanel, BorderLayout.WEST);
+            ThemeManager.updateTheme();
+            revalidate();
+            repaint();
+        }
+    }
+    
     public void showCard(String cardName) {
         // Hide current panel
         if (currentPanel != null) {

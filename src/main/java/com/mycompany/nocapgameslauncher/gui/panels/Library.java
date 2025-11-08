@@ -101,7 +101,7 @@ public class Library extends ThemePanel{
                 while (gameIterator.hasNext()) {
                     GameCardData cardData = gameIterator.next();
                     if (cardData != null) {
-                        String title = cardData.title;
+                        String title = cardData.title; // Use Name Formatting
                         int gameId = cardData.gameId;
                         
                         JPanel card = GameCardCreator.createGameCard(

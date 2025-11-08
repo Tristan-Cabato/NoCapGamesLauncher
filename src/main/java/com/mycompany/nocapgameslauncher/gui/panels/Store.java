@@ -10,6 +10,7 @@ import com.mycompany.nocapgameslauncher.gui.utilities.ThemePanel;
 import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.iterator.StoreGameIterator;
 import com.mycompany.nocapgameslauncher.resourceHandling.GameCardData;
+import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,14 +65,15 @@ public class Store extends ThemePanel {
                 StoreGameIterator gameIterator = new StoreGameIterator(games);
                 while (gameIterator.hasNext()) {
                     GameCardData cardData = gameIterator.next();
+                    String title = NameFormatting.formatGameName(cardData.title);
                     
                     ImageIcon proxyIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + resourceLoader.PROXYIMAGE);
                     JPanel card = GameCardCreator.createGameCard(
-                        cardData.title,
+                        title,
                         cardData.description,
                         proxyIcon,
                         cardData.gameId,
-                        () -> frame.showGameDetail(cardData.title, cardData.gameId)
+                        () -> frame.showGameDetail(title, cardData.gameId)
                     );
                     
                     // Get the image label for async loading
