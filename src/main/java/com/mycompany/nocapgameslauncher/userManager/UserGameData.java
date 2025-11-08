@@ -10,7 +10,7 @@ import java.util.*;
 public class UserGameData {
     private final Set<Integer> ownedGameIds;
     private final Map<Integer, GameStats> gameStats;
-    private final Set<Integer> friendList;
+    private Set<Integer> friendList;
     private int userID;
     private String username;
     private String password;
@@ -54,7 +54,8 @@ public class UserGameData {
     }
 
     public Set<Integer> getFriendList() {
-        return friendList != null ? new HashSet<>(friendList) : new HashSet<>();
+        ensureFriendListInitialized();
+        return new HashSet<>(friendList);
     }
 
     // Game Management
@@ -76,19 +77,28 @@ public class UserGameData {
     }
     
     // Friend Management
+    private void ensureFriendListInitialized() {
+        if (friendList == null) {
+            friendList = new HashSet<>();
+            saveToFile();
+        }
+    }
+
     public void addFriend(int friendId) {
+        ensureFriendListInitialized();
         if (friendList.add(friendId)) {
             saveToFile();
         }
     }
 
     public void removeFriend(int friendId) {
-        if (friendList.remove(friendId)) 
+        if (friendList != null && friendList.remove(friendId)) {
             saveToFile();
+        }
     }
 
     public boolean hasFriend(int friendId) {
-        return friendList.contains(friendId);
+        return friendList != null && friendList.contains(friendId);
     }
 
     // Game Statistics
@@ -118,48 +128,37 @@ public class UserGameData {
 
             try (FileReader reader = new FileReader(userFile)) {
                 Map<String, Object> userData = gson.fromJson(reader, Map.class);
-                if (userData != null) {
-                    // Load owned games
-                    if (userData.containsKey("ownedGameIds")) {
-                        List<Double> gameIds = (List<Double>) userData.get("ownedGameIds");
-                        if (gameIds != null) {
-                            ownedGameIds.clear();
-                            for (Double id : gameIds) {
-                                ownedGameIds.add(id.intValue());
-                            }
-                        }
-                    }
+                if (userData == null) {
+                    return;
+                }
 
-                    // Load game stats
-                    if (userData.containsKey("gameStats")) {
-                        Map<String, Map<String, Object>> statsMap = 
-                            (Map<String, Map<String, Object>>) userData.get("gameStats");
-                        if (statsMap != null) {
-                            gameStats.clear();
-                            for (Map.Entry<String, Map<String, Object>> entry : statsMap.entrySet()) {
-                                try {
-                                    int gameId = Integer.parseInt(entry.getKey());
-                                    Map<String, Object> statData = entry.getValue();
-                                    int playCount = ((Double) statData.getOrDefault("playCount", 0.0)).intValue();
-                                    long lastPlayed = ((Double) statData.getOrDefault("lastPlayed", 0.0)).longValue();
-                                    gameStats.put(gameId, new GameStats(playCount, lastPlayed));
-                                } catch (NumberFormatException e) {
-                                    System.err.println("Invalid game ID in stats: " + entry.getKey());
-                                }
-                            }
-                        }
-                    }
+                // Load owned games
+                if (userData.containsKey("ownedGameIds")) {
+                    List<Number> gameIds = (List<Number>) userData.get("ownedGameIds");
+                    gameIds.forEach(id -> ownedGameIds.add(id.intValue()));
+                }
 
-                    // Load friends list
-                    if (userData.containsKey("friendList")) {
-                        List<Double> friends = (List<Double>) userData.get("friendList");
-                        if (friends != null) {
-                            friendList.clear();
-                            for (Double id : friends) {
-                                friendList.add(id.intValue());
-                            }
-                        }
-                    }
+                // Load friend list
+                if (userData.containsKey("friendList")) {
+                    List<Number> friendIds = (List<Number>) userData.get("friendList");
+                    friendIds.forEach(id -> friendList.add(id.intValue()));
+                } else {
+                    friendList = new HashSet<>();
+                }
+
+                // Load game stats
+                if (userData.containsKey("gameStats")) {
+                    Map<String, Map<String, Number>> statsMap = 
+                        (Map<String, Map<String, Number>>) userData.get("gameStats");
+                    statsMap.forEach((gameId, stats) -> {
+                        gameStats.put(
+                            Integer.parseInt(gameId),
+                            new GameStats(
+                                stats.get("playCount").intValue(),
+                                stats.get("lastPlayed").longValue()
+                            )
+                        );
+                    });
                 }
             }
         } catch (Exception e) {
@@ -201,6 +200,9 @@ public class UserGameData {
 
             // Save owned games
             userData.put("ownedGameIds", new ArrayList<>(ownedGameIds));
+            
+            // Save friend list
+            userData.put("friendList", new ArrayList<>(friendList));
             
             // Save game stats
             Map<String, Map<String, Object>> statsMap = new HashMap<>();

@@ -1,96 +1,61 @@
-# Memento Pattern completion
-    - Reverted the "remember me" checkbox. It's a literal save state of the user's login (Panel, login, user data)
-
-# Friends Panel update
-    - Changed the input of the friends to be all the preexisting users. Its still problematic but for the sake of time, let's leave it for later
-
-# Singleton Pattern completion
-    - Database connections are now handed over to an instance class of DatabaseHandler
-    - Its not intentionally Singleton, but the Facade pattern 'GameManager' is a Singleton
-
-# Iterator Pattern completion
-    - All exposed game and user iterations are now handled by Iterator Pattern
-
-# Facade Pattern completion
-    - All game management is now handled by the GameManager facade
-    - Again it's technically a Singleton Facade but it's not intentionally Singleton
+# Preparation for Insane Overhaul
+    1.) Fixed Sidebar
+        - Dynamic to user value changes now
+        - Has a responsive GameDetail panel now instead of copying the recent one as a static panel without its actual values
+        - Redirects user to Library instead when logged out panel is GameDetail
+    2.) Verification Bugfix
+        - Fixed a bug where user login wasn't case-sensitive
+        - Fixed a bug where registering a user copies the last user's json if belonging in the same session
+    3.) Tracking Changes
+        - The Pattern Defense file is deleted. Our group has our own tracker.
+        - Deleted .windsurf folder, brodie never reads it.
+    4.) Friends Panel Revamp
+        - FriendList is now saved in the json file
+        - Friends' games are now visible
+        - Add/Remove friends now works
 
 # Next Agenda
-    - Sidebar Panel should look more like the first version (Also its broken)
-    - Searchbar integration
-    - Code cleanup
-    - JavaFX integration
+    - The insane overhaul: JavaFX, Code Cleanup
 
 
 ### Files Modified:
-    >> Memento Pattern complete <<
+    >> Fixed sidebar <<
     /gui
         mainFrame.java
-        /panels
-            LoginForm.java
-    /userManager
-        UserMemento.java
-    /iterator
-        SessionIterator.java
-
-    >> All users -> Friends Panel <<
-    /database
-        DatabaseHandler.java
     /panels
-        Friends.java
-    /iterator
-        FriendsIterator.java
-
-    >> Class sorting and Database Singleton <<
-    /game_manager
-        Game.java
-        GameMetadata.java
-        GameRepository.java
-    /gui
-        mainFrame.java
-        /components
-            HeaderCreator.java
-            sidebarCreator.java
-        /panels
-            Friends.java
-            GameDetail.java
-            Library.java
-            LoginForm.java
-            Search.java
-            Store.java
-    /iterator
-        FriendsIterator.java
-        SessionIterator.java
-
-    >> Pattern Cleanup | 1.0 <<
-    /main
-        NoCapGamesLauncher.java
-    /database
-        DatabaseHandler.java
-        databaseMegaquery.java
-    /gui/panels
-        Search.java
-    /userManager
-        UserGameData.java
-
-    >> Added all necessary patterns <<
-    /database
-        DatabaseHandler.java
-        databaseMegaquery.java
-    /game_manager
-        GameManager.java
-    /gui/components
-        HeaderCreator.java
-        sidebarCreator.java
-    /gui/panels
         GameDetail.java
         Library.java
         Store.java
-    /iterator
-        GameDescriptionIterator.java
-        LibraryGameIterator.java
-        StoreGameIterator.java
-        UserDataIterator.java
+
+    >> Login Bug Hotfix <<
+    /database
+        DatabaseHandler.java
+    /userManager
+        UserRepository.java
+
+    >> Registration Bug Hotfix <<
+    /database
+        databaseMegaquery.java
+    /userManager
+        UserGameData.java
+
+    >> Non-Responsive Sidebar fixed <<
+    /gui
+        sidebarCreator.java
+    /panels
+        GameDetail.java
+        Store.java
     /resourceHandling
-        GameCardData.java
-    README.md
+        resourceLoader.java
+
+    >> GameDetail - Memento bandaid
+    /gui
+        mainFrame.java
+
+    >> Friends Panel Revamp
+    /gui
+        mainFrame.java
+    /panels
+        Friends.java
+    /userManager
+        UserGameData.java
