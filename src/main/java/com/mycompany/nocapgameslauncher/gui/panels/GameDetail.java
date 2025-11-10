@@ -7,6 +7,7 @@ import com.mycompany.nocapgameslauncher.userManager.UserGameManager;
 import com.mycompany.nocapgameslauncher.gui.utilities.*;
 import com.mycompany.nocapgameslauncher.gui.components.sidebarCreator;
 import com.mycompany.nocapgameslauncher.game_manager.GameManager;
+import com.mycompany.nocapgameslauncher.game_manager.GameRepository;
 import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.game_manager.Game;
 import com.mycompany.nocapgameslauncher.resourceHandling.NameFormatting;
@@ -16,6 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
+import java.util.List;
 import java.io.*;
 import java.text.SimpleDateFormat;
 
@@ -245,11 +247,12 @@ public class GameDetail extends ThemePanel {
 
     private Map<String, String> loadGameDescriptions() {
         Map<String, String> descriptions = new HashMap<>();
-        try (InputStream inputStream = getClass().getResourceAsStream("/data/games.json")) {
-            if (inputStream != null) {
-                return GameManager.getInstance().getGameDescriptions(inputStream);
+        try {
+            List<Game> games = GameRepository.loadGames();
+            for (Game game : games) {
+                descriptions.put(game.getTitle(), game.getDescription());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Error loading game descriptions: " + e.getMessage());
         }
         return descriptions;

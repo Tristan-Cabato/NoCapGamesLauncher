@@ -29,10 +29,6 @@ public class GameManager {
     public GameIterator getGameIterator() {
         return new GameIterator(getAllGames());
     }
-
-    public Map<String, String> getGameDescriptions(InputStream gameDataStream) throws IOException {
-        return GameDescriptionIterator.fromJson(gameDataStream).toMap();
-    }
     
     public void saveGames(List<Game> games) {
         GameRepository.saveGames(games);

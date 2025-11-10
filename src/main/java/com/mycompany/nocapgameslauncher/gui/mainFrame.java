@@ -20,7 +20,6 @@ public class mainFrame extends JFrame {
     private GameDetail gameDetailPanel;
     private Search searchPanel;
     private Friends friendsPanel;
-    private Profile profilePanel;
     
     private JPanel currentPanel;
     private String currentPanelName = "LIBRARY";
@@ -69,14 +68,12 @@ public class mainFrame extends JFrame {
         gameDetailPanel = new GameDetail(this);
         searchPanel = new Search(this);
         friendsPanel = new Friends(this);
-        profilePanel = new Profile(this);
 
         // Add all panels to the card layout
         mainPanel.add(libraryPanel, "LIBRARY");
         // Store panel will be added when first accessed
         mainPanel.add(new JPanel(), "STORE"); // Placeholder
         mainPanel.add(friendsPanel, "FRIENDS");
-        mainPanel.add(profilePanel, "PROFILE");
         mainPanel.add(gameDetailPanel, "GAME_DETAIL");
         mainPanel.add(searchPanel, "SEARCH");
 
@@ -119,8 +116,6 @@ public class mainFrame extends JFrame {
                 gameDetailPanel.setVisible(false);
             } else if (currentPanel == searchPanel) {
                 searchPanel.setVisible(false);
-            } else if (currentPanel == profilePanel) {
-                profilePanel.setVisible(false);
             }
         }
         
@@ -140,9 +135,6 @@ public class mainFrame extends JFrame {
             } case "FRIENDS" -> {
                 friendsPanel.setVisible(true);
                 currentPanel = friendsPanel;
-            } case "PROFILE" -> {
-                profilePanel.setVisible(true);
-                currentPanel = profilePanel;
             } case "GAME_DETAIL" -> {
                 if (gameDetailPanel.getParent() == null) {
                     mainPanel.add(gameDetailPanel, "GAME_DETAIL");
