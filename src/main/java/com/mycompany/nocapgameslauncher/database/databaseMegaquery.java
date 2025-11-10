@@ -28,6 +28,7 @@ import com.mycompany.nocapgameslauncher.NoCapGamesLauncher;
 import com.mycompany.nocapgameslauncher.game_manager.Game;
 import com.mycompany.nocapgameslauncher.game_manager.GameManager;
 import com.mycompany.nocapgameslauncher.userManager.UserMemento;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 
 public class databaseMegaquery extends JFrame {
     private DatabaseHandler database = DatabaseHandler.getInstance();
@@ -48,6 +49,14 @@ public class databaseMegaquery extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
         getContentPane().setBackground(new Color(32, 32, 32));
+
+        // Set window icon
+            try {
+                ImageIcon icon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + "/ImageResources/logo.png");
+                this.setIconImage(icon.getImage());
+            } catch (Exception e) {
+                System.err.println("Error loading window icon: " + e.getMessage());
+            }
     }
     
     private void setupUI() {
@@ -241,8 +250,8 @@ public class databaseMegaquery extends JFrame {
             "CREATE TABLE IF NOT EXISTS gameData (" +
                 "gameID INT AUTO_INCREMENT PRIMARY KEY, " +
                 "gameName VARCHAR(100) NOT NULL, " +
-                "gameURL TEXT, " +
-                "imageURL TEXT, " +
+                "gameURL VARCHAR(255), " +
+                "imageURL VARCHAR(255), " +
                 "gameDescription TEXT" +
             ")"
         }; // Game Description can be modified, it has a default value, just ALTER it

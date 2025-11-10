@@ -1,13 +1,10 @@
 {
   "ownedGameIds": [
-    3,
+    7,
     9
   ],
   "gameStats": {},
-  "friendList": [
-    2,
-    5
-  ],
-  "userID": 4,
+  "friendList": [],
+  "userID": 5,
   "username": "bb"
 }

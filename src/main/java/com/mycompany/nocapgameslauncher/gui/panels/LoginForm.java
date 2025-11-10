@@ -4,6 +4,7 @@ import com.mycompany.nocapgameslauncher.database.DatabaseHandler;
 import com.mycompany.nocapgameslauncher.database.databaseMegaquery;
 import com.mycompany.nocapgameslauncher.gui.utilities.LightModeToggle;
 import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 import com.mycompany.nocapgameslauncher.userManager.UserMemento;
 
 import javax.swing.*;
@@ -112,9 +113,12 @@ public class LoginForm extends JPanel {
         // Logo row
         JPanel logoRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
         logoRow.setOpaque(false);
-        JLabel logo = new JLabel("\uD83C\uDFAE");
-        logo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 70));
-        logo.setForeground(LightModeToggle.getAccentColor());
+        
+        // Load and scale the logo image
+        ImageIcon originalIcon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + "/ImageResources/logo.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH);
+        JLabel logo = new JLabel(new ImageIcon(scaledImage));
+        
         JLabel title = new JLabel("NO CAP GAMES");
         title.setFont(new Font("Segoe UI", Font.BOLD, 36));
         title.setForeground(LightModeToggle.getTextColor());

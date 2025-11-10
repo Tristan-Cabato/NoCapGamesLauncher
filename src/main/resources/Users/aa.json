@@ -1,13 +1,9 @@
 {
   "ownedGameIds": [
-    1,
-    3,
-    4
+    5
   ],
   "gameStats": {},
-  "friendList": [
-    4
-  ],
-  "userID": 3,
+  "friendList": [],
+  "userID": 4,
   "username": "aa"
 }

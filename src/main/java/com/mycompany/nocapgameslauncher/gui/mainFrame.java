@@ -5,6 +5,7 @@ import com.mycompany.nocapgameslauncher.gui.components.HeaderCreator;
 import com.mycompany.nocapgameslauncher.gui.panels.*;
 import com.mycompany.nocapgameslauncher.gui.utilities.ThemeManager;
 import com.mycompany.nocapgameslauncher.iterator.SessionIterator;
+import com.mycompany.nocapgameslauncher.resourceHandling.resourceLoader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,6 +85,14 @@ public class mainFrame extends JFrame {
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         
         showCard("LIBRARY");
+
+        // Set window icon
+            try {
+                ImageIcon icon = new ImageIcon(resourceLoader.RESOURCE_DIRECTORY + "/ImageResources/logo.png");
+                this.setIconImage(icon.getImage());
+            } catch (Exception e) {
+                System.err.println("Error loading window icon: " + e.getMessage());
+            }
     }
 
     public void refreshSidebar() {
